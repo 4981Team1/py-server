@@ -1,7 +1,7 @@
 # py-server
 A test web server written using Flask/Python and prints 'Hello World'.
 
-###How to set up/run
+### How to set up and run the server
 
 1) Make sure to have virtualenv installed:
 
@@ -33,10 +33,10 @@ Now your virtual environment is installed! To activate/deactivate it, do the fol
     deactivate
 
 2) While the virtual environment or 'venv' is active, run the following commands to install Flask and other
-dependencies
+dependencies:
 
     pip install flask
 
-3) To run the Flask web app, type in the command below
+3) To run the Flask web app, type in the command below. venv should be active as well:
 
     flask run
