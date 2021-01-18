@@ -40,3 +40,8 @@ dependencies:
 3) To run the Flask web app, type in the command below. venv should be active as well:
 
     flask run
+
+
+macos notes if using venv:
+* install mysql: brew install mysql
+* install flask-mysqldb: pip install flask-mysqldb
