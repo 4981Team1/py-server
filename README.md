@@ -1,47 +1,51 @@
 # py-server
-A test web server written using Flask/Python and prints 'Hello World'.
+A basic Flask web app that does the following:
 
-### How to set up and run the server
+* Shows all the current users: `localhost:5000`
+* Creates a new user based on given URL parameters: `localhost:5000?user=[USERNAME]&email=[EMAIL]`
 
-1) Make sure to have virtualenv installed:
+For example, going to `localhost:5000?user=mikhaela&email=test@email.com` creates a user named "mikhaela" with "test@email.com" as their email.
 
-​	a) Install **pip** first
+### Installing and setting up
 
-    sudo apt-get install python3-pip
+1. Make sure to have MySQL server and client installed in your machine. For OS-specific set-up instructions, please refer to this link: https://dev.mysql.com/doc/mysql-getting-started/en/
 
-​	b) Install **virtualenv** using pip3
+   **Note**: If it's your first time setting up the MySQL server, you'll be prompted to enter a password for the server itself. Make sure to remember this password.
 
-    sudo pip3 install virtualenv 
+2. Run MySQL client. Create a local MySQL database named **testflask**. You can copy the first two lines of `database.sql` for the queries.
 
-​	c) Go to the root directory and create a virtual environment 
+3. Clone this repository
 
-    cd py-server
-    virtualenv venv 
+```
+git clone https://github.com/4981Team1/py-server.git
+```
 
->you can use any name insted of **venv**
+3. On your terminal, make and run the deploy script
 
+```
+$ cd py-server
+$ make deploy
+$ ./deploy
+```
 
+This deploy script will install [venv](https://docs.python.org/3/library/venv.html) and the required dependencies to run the web app.
 
-Now your virtual environment is installed! To activate/deactivate it, do the following:
+4. Duplicate the file **.env.example** and rename it as `.env`. 
 
-**Activate**:    
+5. Inside .env, replace **[USER]** and **[PASSWORD]** with the same credentials you use to run MySQL client. For example, if your username is "root" and your password is "password":
 
-    source venv/bin/activate
+   ```
+   SQLALCHEMY_DATABASE_URI=mysql+pymysql://root:password@localhost/testflask
+   ```
 
-**Deactivate/exit**:
+   
 
-    deactivate
+### Running the web app
 
-2) While the virtual environment or 'venv' is active, run the following commands to install Flask and other
-dependencies:
+1. Go to the root directory.
+2. Run the web app by running the deploy script again: `./deploy`
+3. Another way to run the web app is to run it through a virtual environment or *venv* which should be already installed when running the deploy script for the first time. Activate/deactivate the virtual environment by running the following:
+   * **Activate**:    `source venv/bin/activate`
+   * **Deactivate/exit**: `deactivate`
 
-    pip install flask
-
-3) To run the Flask web app, type in the command below. venv should be active as well:
-
-    flask run
-
-
-macos notes if using venv:
-* install mysql: brew install mysql
-* install flask-mysqldb: pip install flask-mysqldb
+While the venv is active, you can run the web app by typing in: `flask run`
