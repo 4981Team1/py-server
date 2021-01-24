@@ -1,24 +1,30 @@
-from app import app
-from flask import render_template, request
-from flask_mysqldb import MySQL
+from flask import make_response, redirect, render_template, request, url_for
+from flask import current_app as app
+from .models import db, Users
 
-mysql = MySQL(app)
 
-@app.route('/')
-@app.route('/index')
-def index():
-    return "Hello, World!"
-
-@app.route('/login', methods=['GET', 'POST'])
-def login():
-    if request.method == "POST":
-        input = request.form
-        username = input['username']
-        email = input['email']
-
-        cur = mysql.connection.cursor()
-        cur.execute("INSERT INTO Users(Username, Email) VALUES (%s, %s)", (username, email))
-        mysql.connection.commit()
-        cur.close()
-        return 'success'
-    return render_template('login.html')
+@app.route('/', methods=['GET'])
+def user_records():
+    """Create a user via query string parameters."""
+    username = request.args.get('user')
+    email = request.args.get('email')
+    if username and email:
+        existing_user = Users.query.filter(
+            Users.username == username or Users.email == email
+        ).first()
+        if existing_user:
+            return make_response(
+                f'{username} ({email}) already created!'
+            )
+        new_user = Users(
+            username=username,
+            email=email
+        )  # Create an instance of the User class
+        db.session.add(new_user)  # Adds new User record to database
+        db.session.commit()  # Commits all changes
+        redirect(url_for('user_records'))
+    return render_template(
+        'users.html',
+        users=Users.query.all(),
+        title="Show Users"
+    )
