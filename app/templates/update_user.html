@@ -1,0 +1,18 @@
+{% extends "layout.html" %}
+
+{% block content %}
+  <div class="container">
+    <h1>Update User</h1>
+    <h3>The user you added already exists.</h3>
+    <form action="{{ url_for('update_user') }}" method = 'post'>
+        <label>Name:</label><br>
+        <input type="text" name="username" value = {{username}}><br>
+        <label>Email:</label><br>
+        <input type="text" name="email" value= {{email}}><br><br>
+        <input type="submit" value="Update">
+    </form>
+    <form action = "{{ url_for('delete_user')}}" method = 'post'>
+        <input type="submit" value="Delete">
+    </form>
+  </div>
+{% endblock %}

@@ -1,7 +1,6 @@
 """Data models."""
 from . import db
 
-
 class Users(db.Model):
     """Data model for user accounts."""
 
