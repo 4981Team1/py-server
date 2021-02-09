@@ -11,7 +11,7 @@ from . import voter, ballot, election
 def voter_records():
     # Creates a new election if there's no exising election document in DB
     filt = {'details' : 'test'}
-    update = { "$setOnInsert": { 'choices': ['a', 'b', 'c'], 'details': 'test' }}
+    update = { "$setOnInsert": { 'choices': {'a':0, 'b':0, 'c':0}, 'details': 'test' }}
     election.update_one(filt, update, upsert=True)
 
     # Grabs all users
@@ -59,7 +59,9 @@ def vote():
     choice = request.args.get('choice')
     
     # Get objectID of test election
-    elec_id = str(election.find_one({'details' : 'test'})['_id']) #need to convert objectid to string
+    elec = election.find_one({'details' : 'test'})
+    elec_id = str(elec['_id']) #need to convert objectid to string
+    choices = elec['choices']
     # print(elec_id)
 
     # Get voterID of the voter specified by params
@@ -67,10 +69,35 @@ def vote():
 
     # Upsert new ballot document
     filt = {'election_id' : elec_id, 'voter_id' : voter_id}
-    new_ballot = {"$set": {'choice' : choice, 'election_id' : elec_id, 'voter_id' : voter_id }}
+    # new_ballot = {"$set": {'choice' : choice, 'election_id' : elec_id, 'voter_id' : voter_id }}
     # ballot.insert_one(new_ballot)
-    ballot.update_one(filt, new_ballot, upsert=True)
-    result = {'result' : 'Voted successfully'}
+    # ballot.update_one(filt, new_ballot, upsert=True)
+    # if db.collection.count_documents({ 'UserIDS': newID }, limit = 1) != 0:
+
+    # Checking if user has already voted for that election
+    if ballot.count_documents(filt, limit=1) != 0:
+        result = {'result': 'Voter already voted!'}
+    else:
+        # Create new ballot if user hasn't voted yet
+        # new_ballot = {'choice' : choice, 'election_id' : elec_id, 'voter_id' : voter_id }
+        # ballot.insert_one(new_ballot)
+        
+        # Increment election result
+        keys = [key  for key, value in choices.items()] # grabbing each key
+        if choice in keys: # checking if user voted for a valid choice
+            # Create new ballot if user hasn't voted yet
+            new_ballot = {'choice' : choice, 'election_id' : elec_id, 'voter_id' : voter_id }
+            ballot.insert_one(new_ballot)
+
+            t= 'choices.'+choice
+            election.update_one({'election_id' : elec_id}, {"$inc": {'choice.%s' % choice : 22}})
+            result = {'result' : 'Vote recorded successfully'}
+            print(t)
+        
+        else:
+            result = {'result' : 'Vote contained invalid answer'}
+
+    print(result)
     return result
 
 # Outputs the vote count as a JSON object
@@ -80,15 +107,7 @@ def results():
 
     # Get objectID of test election
     elec = election.find_one({'details' : 'test'})
-    elec_id = str(elec['_id']) #need to convert objectid to string
-    elec_choices = elec['choices']
+    output = elec['choices']
 
-    ballots = ballot.find({'election_id' : elec_id})
-    votes = [b['choice'] for b in ballots] # getting all the votes from the ballots
-    # print(votes)
-
-    # Contains vote count
-    output = [{c : votes.count(c)} for c in elec_choices]
-        
     print(output)
     return jsonify(output)
