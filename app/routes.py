@@ -6,7 +6,14 @@ from . import voter, ballot, election
 # Grabs all voters
 # http://localhost:5000/
 @app.route('/')
-def voter_records():
+def index():
+  return "<h1>Welcome to good-team server</h1>"
+
+
+# Grabs all voters
+# http://localhost:5000/allvoters
+@app.route('/allvoters')
+def allvoters():
     # Creates a new election if there's no exising election document in DB
     filt = {'details' : 'test'}
     update = { "$setOnInsert": { 'choices': {'a':0, 'b':0, 'c':0}, 'details': 'test' }}
