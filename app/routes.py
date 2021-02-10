@@ -7,18 +7,17 @@ from . import voter, ballot, election
 # http://localhost:5000/
 @app.route('/')
 def index():
-  return "<h1>Welcome to good-team server</h1>"
-
-
-# Grabs all voters
-# http://localhost:5000/allvoters
-@app.route('/allvoters')
-def allvoters():
     # Creates a new election if there's no exising election document in DB
     filt = {'details' : 'test'}
     update = { "$setOnInsert": { 'choices': {'a':0, 'b':0, 'c':0}, 'details': 'test' }}
     election.update_one(filt, update, upsert=True)
+  return "<h1>Welcome to good-team server</h1>"
 
+
+# Grabs all voters
+# http://localhost:5000/all-voters
+@app.route('/all-voters')
+def allvoters():
     # Grabs all users
     voters = voter.find()
     output = [{'name' : voter['name'], 'email' : voter['email']} for voter in voters]
