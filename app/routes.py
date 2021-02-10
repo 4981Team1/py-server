@@ -2,8 +2,6 @@ from flask import make_response, redirect, render_template, request, url_for, js
 from flask import current_app as app
 # from .models import db, Users # not currently used
 from . import voter, ballot, election
-# # Turns debugging on (auto reload)
-# app.run(debug=True)
 
 # Grabs all voters
 # http://localhost:5000/
@@ -45,9 +43,9 @@ def delete():
     result = {'result' : 'Deleted successfully'}
     return result;
 
-# Records the MOST RECENT vote made by a voter into their ballot.
+# Records the vote made by a voter into their ballot.
 # If they haven't voted before, a new Ballot document will be created.
-# Otherwise, the ballot will be updated only with their most recent choice.
+# Otherwise, an error message will occur.
 # 
 # http://localhost:5000/vote?name=[NAME]&choice=[CHOICE]
 # e.g. http://localhost:5000/vote?name=grover&choice=a
@@ -67,32 +65,22 @@ def vote():
     # Get voterID of the voter specified by params
     voter_id = str(voter.find_one({'name' : name})['_id'])
 
-    # Upsert new ballot document
-    filt = {'election_id' : elec_id, 'voter_id' : voter_id}
-    # new_ballot = {"$set": {'choice' : choice, 'election_id' : elec_id, 'voter_id' : voter_id }}
-    # ballot.insert_one(new_ballot)
-    # ballot.update_one(filt, new_ballot, upsert=True)
-    # if db.collection.count_documents({ 'UserIDS': newID }, limit = 1) != 0:
-
     # Checking if user has already voted for that election
+    filt = {'election_id' : elec_id, 'voter_id' : voter_id}
     if ballot.count_documents(filt, limit=1) != 0:
         result = {'result': 'Voter already voted!'}
     else:
-        # Create new ballot if user hasn't voted yet
-        # new_ballot = {'choice' : choice, 'election_id' : elec_id, 'voter_id' : voter_id }
-        # ballot.insert_one(new_ballot)
-        
-        # Increment election result
+        # checking if user voted for a valid choice
         keys = [key  for key, value in choices.items()] # grabbing each key
-        if choice in keys: # checking if user voted for a valid choice
+        if choice in keys: 
+            
             # Create new ballot if user hasn't voted yet
             new_ballot = {'choice' : choice, 'election_id' : elec_id, 'voter_id' : voter_id }
             ballot.insert_one(new_ballot)
 
-            t= 'choices.'+choice
-            election.update_one({'election_id' : elec_id}, {"$inc": {'choice.%s' % choice : 22}})
+            # Incrementing tally count
+            election.update_one({'_id': elec['_id']}, {"$inc": {'choices.'+choice: 1}})
             result = {'result' : 'Vote recorded successfully'}
-            print(t)
         
         else:
             result = {'result' : 'Vote contained invalid answer'}
