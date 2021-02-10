@@ -11,7 +11,7 @@ def index():
     filt = {'details' : 'test'}
     update = { "$setOnInsert": { 'choices': {'a':0, 'b':0, 'c':0}, 'details': 'test' }}
     election.update_one(filt, update, upsert=True)
-  return "<h1>Welcome to good-team server</h1>"
+    return "<h1>Welcome to good-team server</h1>"
 
 
 # Grabs all voters
