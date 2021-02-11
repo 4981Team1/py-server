@@ -1,5 +1,6 @@
 from flask import make_response, redirect, render_template, request, url_for, jsonify
 from flask import current_app as app
+from bson.objectid import ObjectId
 # from .models import db, Users # not currently used
 from . import voter, ballot, election
 
@@ -14,13 +15,63 @@ def index():
     return "<h1>Welcome to good-team server</h1>"
 
 
-# Grabs all voters
-# http://localhost:5000/all-voters
-@app.route('/all-voters')
-def allvoters():
-    # Grabs all users
-    voters = voter.find()
-    output = [{'name' : voter['name'], 'email' : voter['email']} for voter in voters]
+
+# GET all voter's info: 
+# http://localhost:5000/voters
+# 
+# GETs a voter's info based on given ID
+# http://localhost:5000/voters?id=[VOTER_ID]
+#
+# POST add or update the specified voter's info: 
+# http://localhost:5000/voters?name=[NAME]&email=[EMAIL]
+# 
+# DELETE a voter based on given ID
+# http://localhost:5000/voters?id=[VOTER_ID]
+@app.route('/voters', methods = ['GET', 'POST', 'DELETE'])
+def voters():
+
+    if request.method == 'POST':
+        name = request.args.get('name')
+        email = request.args.get('email')
+        updated_voter = {"$set": {'email' : email}}
+        filt = {'name' : name}
+        voter.update_one(filt, updated_voter, upsert=True)
+        output = {'result' : 'Updated successfully'}
+
+    elif request.method == 'GET':
+        # Check if there's an id parameter for looking up individuals
+        voter_id = request.args.get('id')
+        if voter_id:
+            # print(collection.find_one({"_id": ObjectId("59d7ef576cab3d6118805a20")}))
+            filt = {"_id": ObjectId(voter_id)}
+
+            # Check if there's a voter with the corresponding ID
+            if voter.count_documents(filt, limit=1) != 0: 
+                found = voter.find_one(filt)
+                output = {'name' : found['name'], 'email' : found['email']}
+            else:
+                # TODO: Replace error message with something else
+                output = {'name' : 'none', 'email': 'none'}
+        
+        # No id parameter means getting all voters' info instead
+        else:
+            voters = voter.find()
+            output = [{'name' : voter['name'], 'email' : voter['email']} for voter in voters]
+    
+    # elif request.method == 'DELETE':
+    #     voter_id = request.args.get('id')
+    #     if voter_id:
+    #         # print(collection.find_one({"_id": ObjectId("59d7ef576cab3d6118805a20")}))
+    #         filt = {"_id": ObjectId(voter_id)}
+
+    #         found = voter.find_one(filt)
+    #             output = {'name' : found['name'], 'email' : found['email']}
+    #         else:
+    #             # TODO: Replace error message with something else
+    #             output = {'name' : 'none', 'email': 'none'}
+    # Grabs all voters
+    # voters = voter.find()
+    # output = [{'name' : voter['name'], 'email' : voter['email']} for voter in voters]
     print(output)
     return jsonify(output)
 
@@ -105,3 +156,4 @@ def results():
 
     print(output)
     return jsonify(output)
+
