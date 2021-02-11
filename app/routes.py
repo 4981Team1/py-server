@@ -111,6 +111,17 @@ def eligible():
                     output = {'eligible' : True}
                     break
         
+        elif request.method == 'POST':
+            # Verify first if given election exists
+            efilt = {'_id' : ObjectId(elec_id)}
+            if election.count_documents(efilt, limit=1) != 0: 
+                # If election exists, update the voter's election array!
+                vfilt = {'_id' : ObjectId(voter_id)}
+                update = { "$push": { 'elections' : elec_id}}
+                voter.update_one(vfilt, update)
+                output = {'success' : True}
+            else:
+                output = {'success' : False}
     print(output)
     return jsonify(output)
 
