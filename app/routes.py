@@ -15,7 +15,6 @@ def index():
     return "<h1>Welcome to good-team server</h1>"
 
 
-
 # GET all voter's info: 
 # http://localhost:5000/voters
 # 
@@ -37,10 +36,10 @@ def voters():
         filt = {'name' : name}
         voter.update_one(filt, updated_voter, upsert=True)
 
-        # Returns the updated/new voter
+        # Return the updated/new voter
         new_voter = voter.find_one(filt)
         output = {
-            'id': str(new_voter['_id']),
+            '_id': str(new_voter['_id']),
             'name' : new_voter['name'],
             'email' : new_voter['email'],
             }
@@ -57,7 +56,7 @@ def voters():
             if voter.count_documents(filt, limit=1) != 0: 
                 found = voter.find_one(filt)
                 output = {
-                    'id': str(found['_id']),
+                    '_id': str(found['_id']),
                     'name' : found['name'],
                     'email' : found['email'],
                     }
@@ -68,7 +67,10 @@ def voters():
         # No id parameter means getting all voters' info instead
         else:
             voters = voter.find()
-            output = [{'_id': str(found['_id']),'name' : voter['name'], 'email' : voter['email']} for voter in voters]
+            output = [{
+                '_id': str(found['_id']),
+                'name' : voter['name'],
+                'email' : voter['email']} for voter in voters]
     
     elif request.method == 'DELETE':
         voter_id = request.args.get('id')
@@ -79,39 +81,38 @@ def voters():
             # TODO: Do we delete all the ballots associated to a voter when we delete that voter?
             ballot.delete_many(filt) # Delete all associated ballots to the voter first
             voter.delete_one(filt) # Delete the voter themselves
-            output = {'result' : 'Deleted successfully'}
+            output = {'success' : True}
 
         else:
             # TODO: Replace error message with something else?
-            output = {'name' : 'none', 'email': 'none'}
+            output = {'success' : False}
 
     print(output)
     return jsonify(output)
 
-# Updates one voter's email based on name, it would 
-# insert a new voter if it doesn't already exist.
-# http://localhost:5000/update?name=[NAME]&email=[EMAIL]
-# e.g. http://localhost:5000/update?name=grover&email=another@email.com
-@app.route('/update')
-def update():
-    name = request.args.get('name')
-    email = request.args.get('email')
-    updated_voter = {"$set": {'email' : email}}
-    filt = {'name' : name}
-    voter.update_one(filt, updated_voter, upsert=True)
-    result = {'result' : 'Updated successfully'}
-    return result;
-    
-# Deletes one voter based on name
-# http://localhost:5000/delete?name=[NAME]
-# e.g. http://localhost:5000/delete?name=grover
-@app.route('/delete')
-def delete():
-    name = request.args.get('name')
-    filt = {'name' : name}
-    voter.delete_one(filt)
-    result = {'result' : 'Deleted successfully'}
-    return result;
+# GET check if voter is eligible to vote in given election
+# http://localhost:5000/eligible?id=[VOTER_ID]&election=[ELECTION_ID]
+@app.route('/eligible', methods = ['GET', 'POST'])
+def eligible():
+
+    output = {} #not sure what to put for error message
+    voter_id = request.args.get('id')
+    elec_id = request.args.get('election_id')
+    if voter_id and elec_id:
+
+        if request.method == 'GET':
+            found = voter.find_one({'_id': ObjectId(voter_id)})
+
+            # Check if voter is allowed to vote in specified election
+            output = {'eligible' : False}
+            elections = found['elections']
+            for e in elections:
+                if e == elec_id:
+                    output = {'eligible' : True}
+                    break
+        
+    print(output)
+    return jsonify(output)
 
 # Records the vote made by a voter into their ballot.
 # If they haven't voted before, a new Ballot document will be created.
@@ -170,3 +171,17 @@ def results():
     print(output)
     return jsonify(output)
 
+# GET all ballots' info: 
+# http://localhost:5000/ballots
+@app.route('/ballots', methods=['GET'])
+def ballots():
+    if request.method == 'GET':
+        ballots = ballot.find()
+        output = [{
+            '_id': str(bal['_id']),
+            'election_id': bal['election_id'],
+            'voter_id': bal['voter_id'],
+            'choice' : bal['choice']} for bal in ballots]
+    
+    print(output)
+    return jsonify(output)
