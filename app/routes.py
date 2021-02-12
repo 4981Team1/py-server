@@ -8,6 +8,7 @@ from . import voter, ballot, election
 # http://localhost:5000/
 @app.route('/')
 def index():
+
     # Creates a new election if there's no exising election document in DB
     filt = {'details' : 'test'}
     update = { "$setOnInsert": { 'choices': {'a':0, 'b':0, 'c':0}, 'details': 'test' }}
@@ -29,6 +30,7 @@ def index():
 @app.route('/voters', methods = ['GET', 'POST', 'DELETE'])
 def voters():
 
+    output = {}
     # POST /voters
     if request.method == 'POST':
         name = request.args.get('name')
@@ -45,7 +47,6 @@ def voters():
             'email' : new_voter['email'],
             'elections' : []
             }
-        # output = {'result' : 'Updated successfully'}
     
     # GET /voters
     elif request.method == 'GET':
@@ -64,9 +65,6 @@ def voters():
                     'email' : found['email'],
                     'elections' : found['elections']
                     }
-            else:
-                # TODO: Replace error message with something else
-                output = {'name' : 'none', 'email': 'none'}
         
         # No id parameter means getting all voters' info instead
         else:
@@ -121,6 +119,7 @@ def eligible():
             # Verify first if given election exists
             efilt = {'_id' : ObjectId(elec_id)}
             if election.count_documents(efilt, limit=1) != 0: 
+
                 # If election exists, update the voter's election array!
                 vfilt = {'_id' : ObjectId(voter_id)}
                 update = { "$push": { 'elections' : elec_id}}
@@ -135,70 +134,38 @@ def eligible():
 # If they haven't voted before, a new Ballot document will be created.
 # Otherwise, an error message will occur.
 # 
-# http://localhost:5000/vote?name=[NAME]&choice=[CHOICE]
+# POST http://localhost:5000/vote?id=[VOTER_ID]&election_id=[ELECTION_ID]&choice=[CHOICE]
 # e.g. http://localhost:5000/vote?name=grover&choice=a
 @app.route('/vote', methods = ['POST'])
 def vote():
     
-    # output = {} #not sure what to put for error message
-    # voter_id = request.args.get('id')
-    # elec_id = request.args.get('election_id')
-    # if voter_id and elec_id:
-
-    #     if request.method == 'GET':
-    #         found = voter.find_one({'_id': ObjectId(voter_id)})
-
-    #         # Check if voter is allowed to vote in specified election
-    #         output = {'eligible' : False}
-    #         elections = found['elections']
-    #         for e in elections:
-    #             if e == elec_id:
-    #                 output = {'eligible' : True}
-    #                 break
-    # Get url params
-    name = request.args.get('name')
+    output = {} #not sure what to put for error message
+    voter_id = request.args.get('id')
+    elec_id = request.args.get('election_id')
     choice = request.args.get('choice')
-    
-    # Get objectID of test election
-    elec = election.find_one({'details' : 'test'})
-    elec_id = str(elec['_id']) #need to convert objectid to string
-    choices = elec['choices']
-    # print(elec_id)
+    if voter_id and elec_id and choice:
 
-    # Get voterID of the voter specified by params
-    voter_id = str(voter.find_one({'name' : name})['_id'])
+        if request.method == 'POST':
+            found = voter.find_one({'_id': ObjectId(voter_id)})
 
-    # Checking if user has already voted for that election
-    filt = {'election_id' : elec_id, 'voter_id' : voter_id}
-    if ballot.count_documents(filt, limit=1) != 0:
-        result = {'result': 'Voter already voted!'}
-    else:
-        # checking if user voted for a valid choice
-        keys = [key  for key, value in choices.items()] # grabbing each key
-        if choice in keys: 
-            
-            # Create new ballot if user hasn't voted yet
-            new_ballot = {'choice' : choice, 'election_id' : elec_id, 'voter_id' : voter_id }
-            ballot.insert_one(new_ballot)
+            # Check if voter is allowed to vote in specified election,
+            # then record their vote
+            elections = found['elections']
+            for e in elections:
+                if e == elec_id:
+                    output = record_vote(voter_id, elec_id, choice)
+                    break
+    return output
 
-            # Incrementing tally count
-            election.update_one({'_id': elec['_id']}, {"$inc": {'choices.'+choice: 1}})
-            result = {'result' : 'Vote recorded successfully'}
-        
-        else:
-            result = {'result' : 'Vote contained invalid answer'}
-
-    print(result)
-    return result
-
+# TODO: Update so it shows results of a specified election instead
 # Outputs the vote count as a JSON object
 # http://localhost:5000/results
-@app.route('/results')
+@app.route('/results', methods=['GET'])
 def results():
-
-    # Get objectID of test election
-    elec = election.find_one({'details' : 'test'})
-    output = elec['choices']
+    if request.method == 'GET':
+        # Get objectID of test election
+        elec = election.find_one({'details' : 'test'})
+        output = elec['choices']
 
     print(output)
     return jsonify(output)
@@ -217,3 +184,27 @@ def ballots():
     
     print(output)
     return jsonify(output)
+
+# Helper function for recording votes
+def record_vote(vid, eid, choice):
+
+     # Checking if user has already voted for that election
+    output = {'success' : False}
+    elec = election.find_one({'_id' : ObjectId(eid)})
+    choices = elec['choices']
+
+    filt = {'election_id' : eid, 'voter_id' : vid}
+    if ballot.count_documents(filt, limit=1) == 0:
+
+        # checking if user voted for a valid choice
+        keys = [key  for key, value in choices.items()] # grabbing each key
+        if choice in keys: 
+            # Create new ballot if user hasn't voted yet
+            new_ballot = {'choice' : choice, 'election_id' : eid, 'voter_id' : vid }
+            ballot.insert_one(new_ballot)
+
+            # Incrementing tally count
+            election.update_one({'_id': elec['_id']}, {"$inc": {'choices.'+choice: 1}})
+            output = {'success' : True}
+    
+    return output
