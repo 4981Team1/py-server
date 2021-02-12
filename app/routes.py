@@ -29,6 +29,7 @@ def index():
 @app.route('/voters', methods = ['GET', 'POST', 'DELETE'])
 def voters():
 
+    # POST /voters
     if request.method == 'POST':
         name = request.args.get('name')
         email = request.args.get('email')
@@ -42,9 +43,11 @@ def voters():
             '_id': str(new_voter['_id']),
             'name' : new_voter['name'],
             'email' : new_voter['email'],
+            'elections' : []
             }
         # output = {'result' : 'Updated successfully'}
-
+    
+    # GET /voters
     elif request.method == 'GET':
         # Check if there's an id parameter for looking up individuals
         voter_id = request.args.get('id')
@@ -59,6 +62,7 @@ def voters():
                     '_id': str(found['_id']),
                     'name' : found['name'],
                     'email' : found['email'],
+                    'elections' : found['elections']
                     }
             else:
                 # TODO: Replace error message with something else
@@ -68,10 +72,12 @@ def voters():
         else:
             voters = voter.find()
             output = [{
-                '_id': str(found['_id']),
+                '_id': str(voter['_id']),
                 'name' : voter['name'],
-                'email' : voter['email']} for voter in voters]
+                'email' : voter['email'],
+                'elections': voter['elections']} for voter in voters]
     
+    # DELETE /voters
     elif request.method == 'DELETE':
         voter_id = request.args.get('id')
         if voter_id:
@@ -91,7 +97,7 @@ def voters():
     return jsonify(output)
 
 # GET check if voter is eligible to vote in given election
-# http://localhost:5000/eligible?id=[VOTER_ID]&election=[ELECTION_ID]
+# http://localhost:5000/eligible?id=[VOTER_ID]&election_id=[ELECTION_ID]
 @app.route('/eligible', methods = ['GET', 'POST'])
 def eligible():
 
@@ -131,9 +137,24 @@ def eligible():
 # 
 # http://localhost:5000/vote?name=[NAME]&choice=[CHOICE]
 # e.g. http://localhost:5000/vote?name=grover&choice=a
-@app.route('/vote')
+@app.route('/vote', methods = ['POST'])
 def vote():
     
+    # output = {} #not sure what to put for error message
+    # voter_id = request.args.get('id')
+    # elec_id = request.args.get('election_id')
+    # if voter_id and elec_id:
+
+    #     if request.method == 'GET':
+    #         found = voter.find_one({'_id': ObjectId(voter_id)})
+
+    #         # Check if voter is allowed to vote in specified election
+    #         output = {'eligible' : False}
+    #         elections = found['elections']
+    #         for e in elections:
+    #             if e == elec_id:
+    #                 output = {'eligible' : True}
+    #                 break
     # Get url params
     name = request.args.get('name')
     choice = request.args.get('choice')
