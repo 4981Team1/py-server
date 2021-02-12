@@ -1,0 +1,48 @@
+******Add routes here once implemented!*******
+
+BASE URL
+http://localhost:5000/
+
+
+/VOTERS
+GET all voter's info: 
+http://localhost:5000/voters
+ 
+GET a voter's info based on given ID
+http://localhost:5000/voters?id=[VOTER_ID]
+
+POST add or update the specified voter's info: 
+http://localhost:5000/voters?name=[NAME]&email=[EMAIL]
+
+DELETE a voter based on given ID, along with their existing ballots
+http://localhost:5000/voters?id=[VOTER_ID]
+
+
+
+/ELIGIBLE
+GET all elections a given voter is eligible for
+http://localhost:5000/eligible?id=[VOTER_ID]
+
+GET check if voter is eligible to vote in given election
+http://localhost:5000/eligible?id=[VOTER_ID]&election_id=[ELECTION_ID]
+
+POST add voter to an election
+http://localhost:5000/eligible?id=[VOTER_ID]&election_id=[ELECTION_ID]
+
+
+
+/VOTE
+POST record a voter's vote for a given election
+http://localhost:5000/vote?id=[VOTER_ID]&election_id=[ELECTION_ID]&choice=[CHOICE]
+
+
+/RESULTS
+GET the test election's results
+http://localhost:5000/results
+
+
+/BALLOTS
+GET all ballots' info
+http://localhost:5000/ballots
+
+

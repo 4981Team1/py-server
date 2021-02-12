@@ -94,7 +94,14 @@ def voters():
     print(output)
     return jsonify(output)
 
+
+# GET all elections a given voter is eligible for
+# http://localhost:5000/eligible?id=[VOTER_ID]
+# 
 # GET check if voter is eligible to vote in given election
+# http://localhost:5000/eligible?id=[VOTER_ID]&election_id=[ELECTION_ID]
+# 
+# POST add voter to an election
 # http://localhost:5000/eligible?id=[VOTER_ID]&election_id=[ELECTION_ID]
 @app.route('/eligible', methods = ['GET', 'POST'])
 def eligible():
@@ -102,9 +109,9 @@ def eligible():
     output = {} #not sure what to put for error message
     voter_id = request.args.get('id')
     elec_id = request.args.get('election_id')
-    if voter_id and elec_id:
+    if voter_id:
 
-        if request.method == 'GET':
+        if request.method == 'GET' and elec_id:
             found = voter.find_one({'_id': ObjectId(voter_id)})
 
             # Check if voter is allowed to vote in specified election
@@ -115,6 +122,11 @@ def eligible():
                     output = {'eligible' : True}
                     break
         
+        # Getting all elections voter is eligible for
+        elif request.method == 'GET':
+            found = voter.find_one({'_id': ObjectId(voter_id)})
+            output = found['elections']
+       
         elif request.method == 'POST':
             # Verify first if given election exists
             efilt = {'_id' : ObjectId(elec_id)}
