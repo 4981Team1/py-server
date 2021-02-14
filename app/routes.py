@@ -20,24 +20,22 @@ def index():
 # http://localhost:5000/voters
 # 
 # GETs a voter's info based on given ID
-# http://localhost:5000/voters?id=[VOTER_ID]
+# http://localhost:5000/voters/<VOTER_ID>
 #
 # POST add or update the specified voter's info: 
-# http://localhost:5000/voters?name=[NAME]&email=[EMAIL]
+# http://localhost:5000/voters/<NAME>/<EMAIL>
 # 
 # DELETE a voter based on given ID, along with their existing ballots
-# http://localhost:5000/voters?id=[VOTER_ID]
-# @app.route('/eligible/<voter_id>', defaults={'election_id': None}, methods = ['GET'])
+# http://localhost:5000/voters/<VOTER_ID>
 @app.route('/voters', defaults={'voter_id': None, 'name': None, 'email': None}, methods = ['GET'])
 @app.route('/voters/<voter_id>', defaults={'name': None, 'email': None}, methods = ['GET', 'DELETE'])
 @app.route('/voters/<name>/<email>', defaults={'voter_id': None}, methods = ['POST'])
 def voters(voter_id, name, email):
 
     output = {}
+
     # POST /voters
     if request.method == 'POST':
-        # name = request.args.get('name')
-        # email = request.args.get('email')
         updated_voter = {"$set": {'email' : email}}
         filt = {'name' : name}
         voter.update_one(filt, updated_voter, upsert=True)
@@ -54,7 +52,6 @@ def voters(voter_id, name, email):
     # GET /voters
     elif request.method == 'GET':
         # Check if there's an id parameter for looking up individuals
-        # voter_id = request.args.get('id')
         if voter_id:
             # print(collection.find_one({"_id": ObjectId("59d7ef576cab3d6118805a20")}))
             filt = {"_id": ObjectId(voter_id)}
@@ -80,7 +77,6 @@ def voters(voter_id, name, email):
     
     # DELETE /voters
     elif request.method == 'DELETE':
-        # voter_id = request.args.get('id')
         if voter_id:
             # print(collection.find_one({"_id": ObjectId("59d7ef576cab3d6118805a20")}))
             filt = {"_id": ObjectId(voter_id)}
@@ -99,13 +95,13 @@ def voters(voter_id, name, email):
 
 
 # GET all elections a given voter is eligible for
-# http://localhost:5000/eligible?id=[VOTER_ID]
+# http://localhost:5000/eligible/<VOTER_ID>
 # 
 # GET check if voter is eligible to vote in given election
-# http://localhost:5000/eligible?id=[VOTER_ID]&election_id=[ELECTION_ID]
+# http://localhost:5000/eligible/<VOTER_ID>/<ELECTION_ID>
 # 
 # POST add voter to an election
-# http://localhost:5000/eligible?id=[VOTER_ID]&election_id=[ELECTION_ID]
+# http://localhost:5000/eligible/<VOTER_ID>/<ELECTION_ID>
 @app.route('/eligible/<voter_id>', defaults={'election_id': None}, methods = ['GET'])
 @app.route('/eligible/<voter_id>/<election_id>', methods = ['GET', 'POST'])
 def eligible(voter_id, election_id):
@@ -148,8 +144,7 @@ def eligible(voter_id, election_id):
 # If they haven't voted before, a new Ballot document will be created.
 # Otherwise, an error message will occur.
 # 
-# POST http://localhost:5000/vote?id=[VOTER_ID]&election_id=[ELECTION_ID]&choice=[CHOICE]
-# e.g. http://localhost:5000/vote?name=grover&choice=a
+# POST http://localhost:5000/vote/<VOTER_ID>/<ELECTION_ID>/<CHOICE>
 @app.route('/vote/<voter_id>/<election_id>/<choice>', methods = ['POST'])
 def vote(voter_id, election_id, choice):
     
