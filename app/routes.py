@@ -27,14 +27,17 @@ def index():
 # 
 # DELETE a voter based on given ID, along with their existing ballots
 # http://localhost:5000/voters?id=[VOTER_ID]
-@app.route('/voters', methods = ['GET', 'POST', 'DELETE'])
-def voters():
+# @app.route('/eligible/<voter_id>', defaults={'election_id': None}, methods = ['GET'])
+@app.route('/voters', defaults={'voter_id': None, 'name': None, 'email': None}, methods = ['GET'])
+@app.route('/voters/<voter_id>', defaults={'name': None, 'email': None}, methods = ['GET', 'DELETE'])
+@app.route('/voters/<name>/<email>', defaults={'voter_id': None}, methods = ['POST'])
+def voters(voter_id, name, email):
 
     output = {}
     # POST /voters
     if request.method == 'POST':
-        name = request.args.get('name')
-        email = request.args.get('email')
+        # name = request.args.get('name')
+        # email = request.args.get('email')
         updated_voter = {"$set": {'email' : email}}
         filt = {'name' : name}
         voter.update_one(filt, updated_voter, upsert=True)
@@ -45,13 +48,13 @@ def voters():
             '_id': str(new_voter['_id']),
             'name' : new_voter['name'],
             'email' : new_voter['email'],
-            'elections' : []
+            'elections' : new_voter['elections']
             }
     
     # GET /voters
     elif request.method == 'GET':
         # Check if there's an id parameter for looking up individuals
-        voter_id = request.args.get('id')
+        # voter_id = request.args.get('id')
         if voter_id:
             # print(collection.find_one({"_id": ObjectId("59d7ef576cab3d6118805a20")}))
             filt = {"_id": ObjectId(voter_id)}
@@ -77,7 +80,7 @@ def voters():
     
     # DELETE /voters
     elif request.method == 'DELETE':
-        voter_id = request.args.get('id')
+        # voter_id = request.args.get('id')
         if voter_id:
             # print(collection.find_one({"_id": ObjectId("59d7ef576cab3d6118805a20")}))
             filt = {"_id": ObjectId(voter_id)}
@@ -103,22 +106,21 @@ def voters():
 # 
 # POST add voter to an election
 # http://localhost:5000/eligible?id=[VOTER_ID]&election_id=[ELECTION_ID]
-@app.route('/eligible', methods = ['GET', 'POST'])
-def eligible():
+@app.route('/eligible/<voter_id>', defaults={'election_id': None}, methods = ['GET'])
+@app.route('/eligible/<voter_id>/<election_id>', methods = ['GET', 'POST'])
+def eligible(voter_id, election_id):
 
     output = {} #not sure what to put for error message
-    voter_id = request.args.get('id')
-    elec_id = request.args.get('election_id')
     if voter_id:
 
-        if request.method == 'GET' and elec_id:
+        if request.method == 'GET' and election_id:
             found = voter.find_one({'_id': ObjectId(voter_id)})
 
             # Check if voter is allowed to vote in specified election
             output = {'eligible' : False}
             elections = found['elections']
             for e in elections:
-                if e == elec_id:
+                if e == election_id:
                     output = {'eligible' : True}
                     break
         
@@ -129,12 +131,12 @@ def eligible():
        
         elif request.method == 'POST':
             # Verify first if given election exists
-            efilt = {'_id' : ObjectId(elec_id)}
+            efilt = {'_id' : ObjectId(election_id)}
             if election.count_documents(efilt, limit=1) != 0: 
 
                 # If election exists, update the voter's election array!
                 vfilt = {'_id' : ObjectId(voter_id)}
-                update = { "$push": { 'elections' : elec_id}}
+                update = { "$push": { 'elections' : election_id}}
                 voter.update_one(vfilt, update)
                 output = {'success' : True}
             else:
@@ -148,14 +150,11 @@ def eligible():
 # 
 # POST http://localhost:5000/vote?id=[VOTER_ID]&election_id=[ELECTION_ID]&choice=[CHOICE]
 # e.g. http://localhost:5000/vote?name=grover&choice=a
-@app.route('/vote', methods = ['POST'])
-def vote():
+@app.route('/vote/<voter_id>/<election_id>/<choice>', methods = ['POST'])
+def vote(voter_id, election_id, choice):
     
     output = {} #not sure what to put for error message
-    voter_id = request.args.get('id')
-    elec_id = request.args.get('election_id')
-    choice = request.args.get('choice')
-    if voter_id and elec_id and choice:
+    if voter_id and election_id and choice:
 
         if request.method == 'POST':
             found = voter.find_one({'_id': ObjectId(voter_id)})
@@ -164,8 +163,8 @@ def vote():
             # then record their vote
             elections = found['elections']
             for e in elections:
-                if e == elec_id:
-                    output = record_vote(voter_id, elec_id, choice)
+                if e == election_id:
+                    output = record_vote(voter_id, election_id, choice)
                     break
     return output
 
