@@ -4,7 +4,36 @@ Base URL: https://good-team.herokuapp.com/
 
 [TOC]
 
+[/voters](#voters)
 
+* [Show all voters](#show-all-voters)
+* [Show voter](#show-voter)
+* [Create/update voter's info](#createupdate-voters-info)
+* [Update existing info](#update-existing-info)
+
+
+
+[/elections](#elections)
+
+* [Show all elections](#show-all-elections)
+* [Show election](#show-election)
+* [Create new election](#create-new-election)
+* [Update existing election](#update-existing-election)
+* [Delete election](#delete-election)
+
+
+
+[/eligible](#eligible)
+
+* [Show all elections](#show-all-elections-a-voter-is-eligible-for)
+* [Check voter eligibility](#check-voter-eligibility)
+* [Add voter to an election](#add-voter-to-an-election)
+
+[/vote](#vote)
+
+[/results](#results)
+
+[/ballots](#ballots)
 
 **/voters**
 ----
@@ -86,7 +115,7 @@ Returns JSON data of the newly updated/created voter.
 
 * **URL**
 
-  /voters/<name>/ <email>
+  /voters/:name / :email
 
 * **Method:** `POST` 
 
@@ -229,7 +258,7 @@ Returns JSON data of the newly created election.
 
 * **URL**
 
-  /election/<election_id>/<name>/ <email>
+  /election/<election_id>/:name/:email
 
 * **Method:** `POST` 
 
@@ -273,7 +302,7 @@ Returns JSON data of the newly updated election.
 
 * **URL**
 
-  /election/<election_id>/<name>/ <email>
+  /election/<election_id>/:name/:email
 
 * **Method:** `POST` 
 
