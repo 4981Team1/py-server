@@ -1,66 +1,66 @@
 ******Add routes here once implemented!*******
 
 BASE URL
-http://localhost:5000/
+https://good-team.herokuapp.com/
 
 
 /VOTERS
 GET all voter's info: 
-http://localhost:5000/voters
+https://good-team.herokuapp.com/voters
  
 GET a voter's info based on given ID
-http://localhost:5000/voters/<VOTER_ID>
+https://good-team.herokuapp.com/voters/<VOTER_ID>
 
 POST add or update the specified voter's info: 
-http://localhost:5000/voters/<NAME>/<EMAIL>
+https://good-team.herokuapp.com/voters/<NAME>/<EMAIL>
 
 DELETE a voter based on given ID, along with their existing ballots
-http://localhost:5000/voters/<VOTER_ID>
+https://good-team.herokuapp.com/voters/<VOTER_ID>
 
 
 /ELECTIONS
 GET all elections' info: 
-http://localhost:5000/elections
+https://good-team.herokuapp.com/elections
 
 GETs election info based on given ID
-http://localhost:5000/elections/<election_id>
+https://good-team.herokuapp.com/elections/<election_id>
 
 POST create a new election
-/elections/<details>/<choices>
+https://good-team.herokuapp.com/elections/<details>/<choices>
 choices={"a":0, "b":0, "c":0, "d":0}
 
 POST add or update the specified election's info:
-/elections/<election_id>/<details>/<choices>
+https://good-team.herokuapp.com/elections/<election_id>/<details>/<choices>
 choices={"a":0, "b":0, "c":0, "d":0}
  
 DELETE an election based on given ID
-http://localhost:5000/elections/<election_id>
+https://good-team.herokuapp.com/elections/<election_id>
 
 
 /ELIGIBLE
 GET all elections a given voter is eligible for
-http://localhost:5000/eligible/<VOTER_ID>
+https://good-team.herokuapp.com/eligible/<VOTER_ID>
 
 GET check if voter is eligible to vote in given election
-http://localhost:5000/eligible/<VOTER_ID>/<ELECTION_ID>
+https://good-team.herokuapp.com/eligible/<VOTER_ID>/<ELECTION_ID>
 
 POST add voter to an election
-http://localhost:5000/eligible/<VOTER_ID>/<ELECTION_ID>
+https://good-team.herokuapp.com/eligible/<VOTER_ID>/<ELECTION_ID>
 
 
 
 /VOTE
 POST record a voter's vote for a given election
-/vote/<voter_id>/<election_id>/<choice>
+https://good-team.herokuapp.com/vote/<voter_id>/<election_id>/<choice>
 
 
 /RESULTS
 GET an election's results
-http://localhost:5000/results/<election_id>
+https://good-team.herokuapp.com/results/<election_id>
 
 
 /BALLOTS
 GET all ballots' info
-http://localhost:5000/ballots
+https://good-team.herokuapp.com/ballots
 
 
