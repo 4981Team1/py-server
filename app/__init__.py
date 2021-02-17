@@ -5,10 +5,11 @@ from flask_pymongo import PyMongo
 
 # db = SQLAlchemy()
 app = Flask(__name__, instance_relative_config=False)
-# cloud_uri = "mongodb+srv://admin:goodteam@cluster0.x0m4l.mongodb.net/flaskdb?retryWrites=true&w=majority"
-uri = "mongodb://localhost:27017/py_server" # uri for local db
+uri = "mongodb+srv://admin:goodteam@cluster0.x0m4l.mongodb.net/flaskdb?retryWrites=true&w=majority"
+# uri = "mongodb://localhost:27017/flaskdb" # uri for local db
+# uri = "mongodb://localhost:27017/py_server" # uri for local db
 mongo = PyMongo(app, uri)
-# mongo = PyMongo(app, uri=cloud_uri) # for connecting to hosted db
+# mongo = PyMongo(app, uri) # for connecting to hosted db
 db = mongo.db
 
 # collections needed can go here

@@ -96,15 +96,20 @@ def voters(voter_id, name, email):
 # 
 # GETs election info based on given ID
 # http://localhost:5000/elections/<election_id>
+# 
+# POST create a new election
+# /elections/<details>/<choices>
+# choices={"a":0, "b":0, "c":0, "d":0}
 #
-# POST add or update the specified election's info:
-# /elections/<election_id>/<details>/<choices>'
+# POST update an existing election's info:
+# /elections/<election_id>/<details>/<choices>
 # choices={"a":0, "b":0, "c":0, "d":0}
 # 
 # DELETE an election based on given ID
 # http://localhost:5000/elections/<election_id>
-@app.route('/elections', methods = ['GET'])
+@app.route('/elections', defaults={'election_id': None, 'details': None, 'choices': None}, methods = ['GET'])
 @app.route('/elections/<election_id>', defaults={'details': None, 'choices': None}, methods = ['GET', 'DELETE'])
+@app.route('/elections/<details>/<choices>', defaults={'election_id': None}, methods = ['POST'])
 @app.route('/elections/<election_id>/<details>/<choices>', methods = ['POST'])
 def display_elections(election_id, details, choices):
     output = {}
@@ -116,7 +121,7 @@ def display_elections(election_id, details, choices):
 
             filt = {"_id": ObjectId(election_id)}
             updated_elec = {"$set": {'details' : details, 'choices': updated_choices}}
-            election.update_one(filt, updated_elec, upsert=True)
+            election.update_one(filt, updated_elec)
 
             # Return the updated/new election
             new_election = election.find_one(filt)
@@ -128,7 +133,8 @@ def display_elections(election_id, details, choices):
 
         else: 
             # if no id is present, add an election
-            insert = { 'choices': {'a':0, 'b':0, 'c':0}, 'details': 'test' }
+            new_choices = json.loads(choices)
+            insert = { 'choices': new_choices, 'details': details }
             new_elec = election.insert_one(insert)
             
             filt = {"_id": ObjectId(new_elec.inserted_id)}
@@ -141,7 +147,6 @@ def display_elections(election_id, details, choices):
 
     # GET /elections
     elif request.method == 'GET':
-    # if request.method == 'GET':
         # Check if there's an id parameter for looking up specific election
         if election_id:
             # print(collection.find_one({"_id": ObjectId("59d7ef576cab3d6118805a20")}))
@@ -167,7 +172,6 @@ def display_elections(election_id, details, choices):
     # DELETE /elections
     elif request.method == 'DELETE':
         if election_id:
-            # print(collection.find_one({"_id": ObjectId("59d7ef576cab3d6118805a20")}))
             filt = {"_id": ObjectId(election_id)}
 
             # Just delete the election for now
