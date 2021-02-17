@@ -9,7 +9,6 @@ import json
 # http://localhost:5000/
 @app.route('/')
 def index():
-
     # Creates a new election if there's no exising election document in DB
     filt = {'details' : 'test'}
     update = { "$setOnInsert": { 'choices': {'a':0, 'b':0, 'c':0}, 'details': 'test' }}
@@ -31,7 +30,6 @@ def index():
 @app.route('/voters/<voter_id>', defaults={'name': None, 'email': None}, methods = ['GET', 'DELETE'])
 @app.route('/voters/<name>/<email>', defaults={'voter_id': None}, methods = ['POST'])
 def voters(voter_id, name, email):
-
     output = {}
 
     # POST /voters
@@ -97,26 +95,23 @@ def voters(voter_id, name, email):
 # http://localhost:5000/elections
 # 
 # GETs election info based on given ID
-# http://localhost:5000/elections?id=[ELECTION_ID]
+# http://localhost:5000/elections/<election_id>
 #
 # POST add or update the specified election's info:
-# http://localhost:5000/elections 
-# http://localhost:5000/elections?id=[ELECTION_ID]&details=[NEW DETAILS]]&choices=[{"a":0, "b":0, "c":0, "d":0}]
+# /elections/<election_id>/<details>/<choices>'
+# choices={"a":0, "b":0, "c":0, "d":0}
 # 
 # DELETE an election based on given ID
-# http://localhost:5000/elections?id=[ELECTION_ID]
-@app.route('/elections', methods = ['GET', 'POST', 'DELETE'])
-def display_elections():
-
+# http://localhost:5000/elections/<election_id>
+@app.route('/elections', methods = ['GET'])
+@app.route('/elections/<election_id>', defaults={'details': None, 'choices': None}, methods = ['GET', 'DELETE'])
+@app.route('/elections/<election_id>/<details>/<choices>', methods = ['POST'])
+def display_elections(election_id, details, choices):
     output = {}
-    election_id = request.args.get('id') 
 
     # POST /elections
     if request.method == 'POST':
-        if election_id: # if id is present, then you update
-            details = request.args.get('details')
-            choices = request.args.get('choices')
-            
+        if election_id: # if id is present, then you update            
             updated_choices = json.loads(choices)
 
             filt = {"_id": ObjectId(election_id)}
@@ -197,7 +192,6 @@ def display_elections():
 @app.route('/eligible/<voter_id>', defaults={'election_id': None}, methods = ['GET'])
 @app.route('/eligible/<voter_id>/<election_id>', methods = ['GET', 'POST'])
 def eligible(voter_id, election_id):
-
     output = {} #not sure what to put for error message
     if voter_id:
 
@@ -238,8 +232,7 @@ def eligible(voter_id, election_id):
 # 
 # POST http://localhost:5000/vote/<VOTER_ID>/<ELECTION_ID>/<CHOICE>
 @app.route('/vote/<voter_id>/<election_id>/<choice>', methods = ['POST'])
-def vote(voter_id, election_id, choice):
-    
+def vote(voter_id, election_id, choice):   
     output = {} #not sure what to put for error message
     if voter_id and election_id and choice:
 
@@ -256,11 +249,10 @@ def vote(voter_id, election_id, choice):
     return output
 
 # Outputs the vote count as a JSON object
-# http://localhost:5000/results?id=[ELECTION_ID]
-@app.route('/results', methods=['GET'])
-def results():
+# http://localhost:5000/results/<election_id>
+@app.route('/results/<election_id>', methods=['GET'])
+def results(election_id):
     if request.method == 'GET':
-        election_id = request.args.get('id')
         # Get objectID of test election
         elec = election.find_one({'_id': ObjectId(election_id)})
         output = elec['choices']
@@ -285,8 +277,7 @@ def ballots():
 
 # Helper function for recording votes
 def record_vote(vid, eid, choice):
-
-     # Checking if user has already voted for that election
+    # Checking if user has already voted for that election
     output = {'success' : False}
     elec = election.find_one({'_id' : ObjectId(eid)})
     choices = elec['choices']

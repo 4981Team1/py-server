@@ -18,6 +18,20 @@ DELETE a voter based on given ID, along with their existing ballots
 http://localhost:5000/voters/<VOTER_ID>
 
 
+/ELECTIONS
+GET all elections' info: 
+http://localhost:5000/elections
+
+GETs election info based on given ID
+http://localhost:5000/elections/<election_id>
+
+POST add or update the specified election's info:
+/elections/<election_id>/<details>/<choices>
+choices={"a":0, "b":0, "c":0, "d":0}
+ 
+DELETE an election based on given ID
+http://localhost:5000/elections/<election_id>
+
 
 /ELIGIBLE
 GET all elections a given voter is eligible for
@@ -37,8 +51,8 @@ POST record a voter's vote for a given election
 
 
 /RESULTS
-GET the test election's results
-http://localhost:5000/results
+GET an election's results
+http://localhost:5000/results/<election_id>
 
 
 /BALLOTS
