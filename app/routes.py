@@ -3,18 +3,17 @@ from flask import current_app as app
 from bson.objectid import ObjectId
 # from .models import db, Users # not currently used
 from . import voter, ballot, election
+import json
 
 # Grabs all voters
 # http://localhost:5000/
 @app.route('/')
 def index():
-
     # Creates a new election if there's no exising election document in DB
     filt = {'details' : 'test'}
     update = { "$setOnInsert": { 'choices': {'a':0, 'b':0, 'c':0}, 'details': 'test' }}
     election.update_one(filt, update, upsert=True)
     return "<h1>Welcome to good-team server</h1>"
-
 
 # GET all voter's info: 
 # http://localhost:5000/voters
@@ -31,7 +30,6 @@ def index():
 @app.route('/voters/<voter_id>', defaults={'name': None, 'email': None}, methods = ['GET', 'DELETE'])
 @app.route('/voters/<name>/<email>', defaults={'voter_id': None}, methods = ['POST'])
 def voters(voter_id, name, email):
-
     output = {}
 
     # POST /voters
@@ -93,6 +91,99 @@ def voters(voter_id, name, email):
     print(output)
     return jsonify(output)
 
+# GET all elections' info: 
+# http://localhost:5000/elections
+# 
+# GETs election info based on given ID
+# http://localhost:5000/elections/<election_id>
+# 
+# POST create a new election
+# /elections/<details>/<choices>
+# choices={"a":0, "b":0, "c":0, "d":0}
+#
+# POST update an existing election's info:
+# /elections/<election_id>/<details>/<choices>
+# choices={"a":0, "b":0, "c":0, "d":0}
+# 
+# DELETE an election based on given ID
+# http://localhost:5000/elections/<election_id>
+@app.route('/elections', defaults={'election_id': None, 'details': None, 'choices': None}, methods = ['GET'])
+@app.route('/elections/<election_id>', defaults={'details': None, 'choices': None}, methods = ['GET', 'DELETE'])
+@app.route('/elections/<details>/<choices>', defaults={'election_id': None}, methods = ['POST'])
+@app.route('/elections/<election_id>/<details>/<choices>', methods = ['POST'])
+def display_elections(election_id, details, choices):
+    output = {}
+
+    # POST /elections
+    if request.method == 'POST':
+        if election_id: # if id is present, then you update            
+            updated_choices = json.loads(choices)
+
+            filt = {"_id": ObjectId(election_id)}
+            updated_elec = {"$set": {'details' : details, 'choices': updated_choices}}
+            election.update_one(filt, updated_elec)
+
+            # Return the updated/new election
+            new_election = election.find_one(filt)
+            output = {
+                '_id': str(new_election['_id']),
+                'details': new_election['details'],
+                'choices': new_election['choices']
+            }
+
+        else: 
+            # if no id is present, add an election
+            new_choices = json.loads(choices)
+            insert = { 'choices': new_choices, 'details': details }
+            new_elec = election.insert_one(insert)
+            
+            filt = {"_id": ObjectId(new_elec.inserted_id)}
+            new = election.find_one(filt)
+            output = {
+                '_id': str(new['_id']),
+                'details': new['details'],
+                'choices': new['choices']
+            }
+
+    # GET /elections
+    elif request.method == 'GET':
+        # Check if there's an id parameter for looking up specific election
+        if election_id:
+            # print(collection.find_one({"_id": ObjectId("59d7ef576cab3d6118805a20")}))
+            filt = {"_id": ObjectId(election_id)}
+
+            # Check if there's an election with the corresponding ID
+            if election.count_documents(filt, limit=1) != 0: 
+                found = election.find_one(filt)
+                output = {
+                    '_id': str(found['_id']),
+                    'details': found['details'],
+                    'choices': found['choices']
+                    }
+        
+        # No id parameter means getting all elections info instead
+        else:
+            elections = election.find()
+            output = [{
+                '_id': str(election['_id']),
+                'details': election['details'],
+                'choices': election['choices']} for election in elections]
+    
+    # DELETE /elections
+    elif request.method == 'DELETE':
+        if election_id:
+            filt = {"_id": ObjectId(election_id)}
+
+            # Just delete the election for now
+            election.delete_one(filt)
+            output = {'success' : True}
+
+        else:
+            # TODO: Replace error message with something else?
+            output = {'success' : False}
+
+    print(output)
+    return jsonify(output)
 
 # GET all elections a given voter is eligible for
 # http://localhost:5000/eligible/<VOTER_ID>
@@ -105,7 +196,6 @@ def voters(voter_id, name, email):
 @app.route('/eligible/<voter_id>', defaults={'election_id': None}, methods = ['GET'])
 @app.route('/eligible/<voter_id>/<election_id>', methods = ['GET', 'POST'])
 def eligible(voter_id, election_id):
-
     output = {} #not sure what to put for error message
     if voter_id:
 
@@ -146,8 +236,7 @@ def eligible(voter_id, election_id):
 # 
 # POST http://localhost:5000/vote/<VOTER_ID>/<ELECTION_ID>/<CHOICE>
 @app.route('/vote/<voter_id>/<election_id>/<choice>', methods = ['POST'])
-def vote(voter_id, election_id, choice):
-    
+def vote(voter_id, election_id, choice):   
     output = {} #not sure what to put for error message
     if voter_id and election_id and choice:
 
@@ -163,14 +252,13 @@ def vote(voter_id, election_id, choice):
                     break
     return output
 
-# TODO: Update so it shows results of a specified election instead
 # Outputs the vote count as a JSON object
-# http://localhost:5000/results
-@app.route('/results', methods=['GET'])
-def results():
+# http://localhost:5000/results/<election_id>
+@app.route('/results/<election_id>', methods=['GET'])
+def results(election_id):
     if request.method == 'GET':
         # Get objectID of test election
-        elec = election.find_one({'details' : 'test'})
+        elec = election.find_one({'_id': ObjectId(election_id)})
         output = elec['choices']
 
     print(output)
@@ -193,8 +281,7 @@ def ballots():
 
 # Helper function for recording votes
 def record_vote(vid, eid, choice):
-
-     # Checking if user has already voted for that election
+    # Checking if user has already voted for that election
     output = {'success' : False}
     elec = election.find_one({'_id' : ObjectId(eid)})
     choices = elec['choices']
