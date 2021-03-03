@@ -38,8 +38,20 @@ https://good-team.herokuapp.com/elections/<election_id>
 
 
 /ELIGIBLE
-GET all elections a given voter is eligible for
-https://good-team.herokuapp.com/eligible/<VOTER_ID>
+GET all elections a given voter is eligible for and
+elections they haven't voted on yet.
+http://localhost:5000/eligible/<VOTER_ID>
+
+returns:
+{
+    "elections": [
+        "id1",
+        "id2"
+    ],
+    "voteless": [
+        "id2"
+    ]
+}
 
 GET check if voter is eligible to vote in given election
 https://good-team.herokuapp.com/eligible/<VOTER_ID>/<ELECTION_ID>

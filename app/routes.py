@@ -185,7 +185,8 @@ def display_elections(election_id, details, choices):
     print(output)
     return jsonify(output)
 
-# GET all elections a given voter is eligible for
+# GET all elections a given voter is eligible for and
+# elections they haven't voted on yet.
 # http://localhost:5000/eligible/<VOTER_ID>
 # 
 # GET check if voter is eligible to vote in given election
@@ -193,7 +194,9 @@ def display_elections(election_id, details, choices):
 # 
 # POST add voter to an election
 # http://localhost:5000/eligible/<VOTER_ID>/<ELECTION_ID>
+# @app.route('/eligible/<voter_id>/voted', defaults={'election_id': None}, methods = ['GET'])
 @app.route('/eligible/<voter_id>', defaults={'election_id': None}, methods = ['GET'])
+# @app.route('/eligible/voted/<voter_id>', defaults={'election_id': None}, methods = ['GET'])
 @app.route('/eligible/<voter_id>/<election_id>', methods = ['GET', 'POST'])
 def eligible(voter_id, election_id):
     output = {} #not sure what to put for error message
@@ -213,7 +216,16 @@ def eligible(voter_id, election_id):
         # Getting all elections voter is eligible for
         elif request.method == 'GET':
             found = voter.find_one({'_id': ObjectId(voter_id)})
-            output = found['elections']
+            elecs = found['elections']
+            output = {
+                'elections': elecs,
+                'voteless': find_voteless_elections(elecs, voter_id)
+            }
+
+            # c = request.url_rule
+
+            # if "voted" in c.rule:
+            #     print("they voted")
        
         elif request.method == 'POST':
             # Verify first if given election exists
@@ -301,3 +313,18 @@ def record_vote(vid, eid, choice):
             output = {'success' : True}
     
     return output
+
+# Helper function for finding elections a user is eligible for 
+# but hasn't voted on yet.
+# Returns array of str election ids
+def find_voteless_elections(elecs, vid):
+    output = []
+    for eid in elecs:
+        elec = election.find_one({'_id' : ObjectId(eid)})
+        filt = {'election_id' : eid, 'voter_id' : vid}
+
+        if ballot.count_documents(filt, limit=1) == 0:
+            output.append(eid);
+    
+    return output;
+

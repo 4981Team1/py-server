@@ -1,18 +1,9 @@
 # py-server
-A basic Flask web app that does the following:
-
-* Shows all the current users: `localhost:5000`
-* Creates a new user based on given URL parameters: `localhost:5000?user=[USERNAME]&email=[EMAIL]`
-
-For example, going to `localhost:5000?user=mikhaela&email=test@email.com` creates a user named "mikhaela" with "test@email.com" as their email.
-
 ### Installing and setting up
 
-1. Make sure to have MySQL server and client installed in your machine. For OS-specific set-up instructions, please refer to this link: https://dev.mysql.com/doc/mysql-getting-started/en/
+1. Make sure to have MongoDB installed in your local machine. For OS-specific set-up instructions, please refer to this link: https://docs.mongodb.com/manual/administration/install-community/
 
-   **Note**: If it's your first time setting up the MySQL server, you'll be prompted to enter a password for the server itself. Make sure to remember this password.
-
-2. Run MySQL client. Create a local MySQL database named **testflask**. You can copy the first two lines of `database.sql` for the queries.
+   **Note:** If you prefer to use a GUI for managing MongoDB databases , we suggest checking out [Robo 3T](https://robomongo.org/download).
 
 3. Clone this repository
 
@@ -30,17 +21,9 @@ $ ./deploy
 
 This deploy script will install [venv](https://docs.python.org/3/library/venv.html) and the required dependencies to run the web app.
 
-4. Duplicate the file **.env.example** and rename it as `.env`. 
 
-5. Inside .env, replace **[USER]** and **[PASSWORD]** with the same credentials you use to run MySQL client. For example, if your username is "root" and your password is "password":
 
-   ```
-   SQLALCHEMY_DATABASE_URI=mysql+pymysql://root:password@localhost/testflask
-   ```
-
-   
-
-### Running the web app
+### Running the server
 
 1. Go to the root directory.
 2. Run the web app by running the deploy script again: `./deploy`
@@ -49,3 +32,10 @@ This deploy script will install [venv](https://docs.python.org/3/library/venv.ht
    * **Deactivate/exit**: `deactivate`
 
 While the venv is active, you can run the web app by typing in: `flask run`
+
+
+
+### API
+
+Refer to [API.md](./API.md) or to our SwaggerHub [API doc](https://app.swaggerhub.com/apis-docs/agoryelov/vote-api/1.0.0)
+
