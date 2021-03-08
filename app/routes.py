@@ -276,21 +276,6 @@ def results(election_id):
     print(output)
     return jsonify(output)
 
-# GET all ballots' info: 
-# http://localhost:5000/ballots
-@app.route('/ballots', methods=['GET'])
-def ballots():
-    if request.method == 'GET':
-        ballots = ballot.find()
-        output = [{
-            '_id': str(bal['_id']),
-            'election_id': bal['election_id'],
-            'voter_id': bal['voter_id'],
-            'choice' : bal['choice']} for bal in ballots]
-    
-    print(output)
-    return jsonify(output)
-
 # Helper function for recording votes
 def record_vote(vid, eid, choice):
     # Checking if user has already voted for that election
