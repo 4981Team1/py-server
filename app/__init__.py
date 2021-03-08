@@ -25,4 +25,7 @@ def create_app():
 
     with app.app_context():
         from . import routes  # Import routes
+        from . import voters
+        from . import elections
+        from . import ballots
         return app
