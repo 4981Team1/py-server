@@ -5,22 +5,43 @@ from . import voter, ballot, election
 def voterstest():
     return "<h1>Welcome to voters</h1>"
 
-# Helper function for finding elections a user is eligible for 
-# but hasn't voted on yet.
-# Returns array of votable elections' electionIDs
-def find_votable_elections(elecs, vid):
+# TODO: Create Voter - POST /voters
+# TODO: Get Voter - GET /voters/:id
+# TODO: Get Elections for a Voter - GET /voters/:voterId/elections
+# TODO: Add Election for a Voter - POST /voters/:voterId/elections
+# TODO: Remove Election from a Voter - DELETE /voters/:voterId/elections/:electionId
+# TODO: Delete Voter - DELETE /voters/:id
+
+# Requires a voters' elections array and voterID
+def find_elections(elecs, vid):
     """
-    Helper function for finding elections a user is eligible for but hasn't voted on yet.\n
+    Helper function for finding a voter's votable and non-votable elections.\n
     Returns:\n
-    array of votable elections' electionIDs
+    JSON obj of a voter's votable and non-votable elections.
     """
 
-    output = []
+    output = {}
+    non_votable = []
+    votable = []
+
     for eid in elecs:
         elec = election.find_one({'_id' : ObjectId(eid)})
         filt = {'election_id' : eid, 'voter_id' : vid}
 
+        # If there's NO EXISTING ballots made by the user for the current election,
+        # add the electionID into the "votable" elections list.
         if ballot.count_documents(filt, limit=1) == 0:
-            output.append(eid);
+            votable.append(eid);
+        
+        # If a ballot made by the user EXISTS for the current election,
+        # add electionID into "non-votable" elections list.
+        else:
+            non_votable.append(eid)
+
+    output = {
+        'votable' : votable
+        'non_votable' : non_votable
+    }
+            
     
     return output;
