@@ -46,6 +46,8 @@ def ballots():
 
 # Helper function for recording votes
 def record_vote(vid, eid, choice):
+    """Helper function for recording new votes"""
+
     # Checking if user has already voted for that election
     output = {'success' : False}
     elec = election.find_one({'_id' : ObjectId(eid)})
