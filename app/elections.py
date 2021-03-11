@@ -92,7 +92,7 @@ def get_voters_for_election(election_id):
                     if election_id in curr_elec:
                         print("found it!")
                         output.append(curr_voter['_id'])
-                        break;
+                        break
 
     return jsonify(output)
 
