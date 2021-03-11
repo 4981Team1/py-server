@@ -8,13 +8,13 @@ from bson.objectid import ObjectId
 # 
 # GETs election info based on given ID
 # http://localhost:5000/elections/<election_id>
-@app.route('/elections/<election_id>', defaults={'details': None, 'choices': None}, methods = ['GET'])
+@app.route('/elections', defaults={'election_id': None}, methods = ['GET'])
+@app.route('/elections/<election_id>', methods = ['GET'])
 def get_elections(election_id):
     output = {}
 
     # GET /elections
     if request.method == 'GET':
-        election_id = request.args("")
 
         # Getting a single election
         # Check if there's an id parameter for looking up specific election

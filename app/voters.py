@@ -26,7 +26,8 @@ def post_voter():
 
 # Get Voter - GET /voters/:id
 # Delete Voter - DELETE /voters/:id
-@app.route('/voters/<voter_id>', defaults={'name': None, 'email': None}, methods = ['GET', 'DELETE'])
+@app.route('/voters', defaults={'voter_id': None}, methods = ['GET'])
+@app.route('/voters/<voter_id>', methods = ['GET', 'DELETE'])
 def get_voter(voter_id):
     output = {
         '_id': "",
