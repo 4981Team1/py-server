@@ -72,7 +72,7 @@ def get_voter(voter_id):
     return jsonify(output)
 
 # Get Elections for a Voter - GET /voters/:voterId/elections
-@app.route('/voters/<voter_id>/elections', defaults={'voter_id': None}, methods = ['GET'])
+@app.route('/voters/<voter_id>/elections', methods = ['GET'])
 def get_elections_for_voters(voter_id):
     keyword = "elections"
     url = str(request.url_rule)
