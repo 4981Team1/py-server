@@ -1,3 +1,4 @@
+from app.auth import require_jwt_token
 from flask import make_response, redirect, render_template, request, url_for, jsonify
 from flask import current_app as app
 from . import voter, ballot, election
@@ -6,23 +7,6 @@ from bson.objectid import ObjectId
 @app.route('/voterstest')
 def voterstest():
     return "<h1>Welcome to voters</h1>"
-
-# Create Voter - POST /voters
-# INCOMING: { name = "", email = "" }
-@app.route('/voters', methods = ['POST'])
-def post_voter():
-    output = {
-        '_id': "",
-        'success': False
-    }
-
-    name = request.json["name"]
-    email = request.json["email"]
-
-    if name and email:
-        output = create_voter(name, email)
-    
-    return jsonify(output)
 
 # Get Voter - GET /voters/:id
 # Delete Voter - DELETE /voters/:id
@@ -74,42 +58,46 @@ def get_voter(voter_id):
 
 # Get Elections for a Voter - GET /voters/:voterId/elections
 @app.route('/voters/<voter_id>/elections', methods = ['GET'])
+@require_jwt_token
 def get_elections_for_voters(voter_id):
-    keyword = "elections"
-    url = str(request.url_rule)
-    output = {}
-
-    if request.method == 'GET' and keyword in url:
-        if voter_id:
-            found = voter.find_one({'_id': ObjectId(voter_id)})
-            elecs = found['elections']
-            output = find_elections(elecs, voter_id)
-
-    return output
+    output = { 'success': False, 'error': '', 'elections': '' }
+    
+    found = voter.find_one({'_id': ObjectId(voter_id)})
+    if not found:
+        output['error'] = f'Voter not found for id {voter_id}'
+        return jsonify(output), 400
+    
+    output = { 'success': True, 'error': '', 'elections': found['elections'] }
+    return jsonify(output), 200
 
 # Add Election for a Voter - POST /voters/:voterId/elections/:electionId
 @app.route('/voters/elections', methods = ['POST'])
+@require_jwt_token
 def add_election_for_voter():
-    keyword = "elections"
-    url = str(request.url_rule)
-    output = {}
+    output = { 'success': False, 'error': '' }
+    body = request.get_json(force=True)
 
-    voter_id = request.json["voter_id"]
-    election_id = request.json["election_id"]
+    if 'voter_id' not in body or 'election_id' not in body:
+        output['error'] = 'Required: voter_id, election_id'
+        return jsonify(output), 400
 
-    if request.method == 'POST' and keyword in url:
-        if voter_id and election_id:
-            # Verify first if given election exists
-            efilt = {'_id' : ObjectId(election_id)}
-            if election.count_documents(efilt, limit=1) != 0: 
-                # If election exists, update the voter's election array!
-                vfilt = {'_id' : ObjectId(voter_id)}
-                update = { "$push": { 'elections' : election_id}}
-                voter.update_one(vfilt, update)
-                output = {'success' : True}
-            else:
-                output = {'success' : False}
-    return jsonify(output)
+    voter_id = body["voter_id"]
+    election_id = body["election_id"]    
+
+    voter_to_update = voter.find_one({"_id": ObjectId(voter_id)})
+    if not voter_to_update:
+        output['error'] = f'Voter not found for id: {voter_id}'
+        return jsonify(output), 400
+    
+    election_to_add = election.find_one({"_id": ObjectId(election_id)})
+    if not election_to_add:
+        output['error'] = f'Election not found for id: {election_id}'
+        return jsonify(output), 400
+
+    voter.update_one({ "_id": ObjectId(voter_id) }, {'$push': {'elections': election_id}})
+
+    output = { 'success': True, 'error': ''}
+    return jsonify(output), 200
 
 # Remove Election from a Voter - DELETE /voters/:voterId/elections/:electionId
 @app.route('/voters/<voter_id>/elections/<election_id>', methods = ['DELETE'])
@@ -130,59 +118,4 @@ def delete_election_for_voter(voter_id, election_id):
                 voter.update(found, remove)
                 # print("Successfully removed!")
                 output = {'success' : True}
-    return output          
-
-# Helper function to create a new voter
-# INCOMING: { name = "", email = "" }
-def create_voter(name, email):
-    output = {}
-
-    new_voter = {
-        'name' : name,
-        'email' : email,
-        'elections': []
-    }
-    
-    created_voter = voter.insert_one(new_voter)
-
-    filt = {"_id": ObjectId(created_voter.inserted_id)}
-    check_user = voter.find_one(filt)
-    output = {
-        '_id': str(check_user['_id']),
-        'success': True
-    }
-
-    return output
-
-# Requires a voters' elections array and voterID
-def find_elections(elecs, vid):
-    """
-    Helper function for finding a voter's votable and non-votable elections.\n
-    Returns:\n
-    JSON obj of a voter's votable and non-votable elections.
-    """
-
-    output = {}
-    non_votable = []
-    votable = []
-
-    for eid in elecs:
-        elec = election.find_one({'_id' : ObjectId(eid)})
-        filt = {'election_id' : eid, 'voter_id' : vid}
-
-        # If there's NO EXISTING ballots made by the user for the current election,
-        # add the electionID into the "votable" elections list.
-        if ballot.count_documents(filt, limit=1) == 0:
-            votable.append(eid)
-        
-        # If a ballot made by the user EXISTS for the current election,
-        # add electionID into "non-votable" elections list.
-        else:
-            non_votable.append(eid)
-
-    output = {
-        'votable' : votable,
-        'non_votable' : non_votable
-    }
-    
     return output
