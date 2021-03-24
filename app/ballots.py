@@ -24,46 +24,40 @@ from . import voter, ballot, election
 # 
 # POST http://localhost:5000/ballots
 @app.route('/ballots', methods = ['POST'])
-def ballots():   
-    voter_id = request.json["voter_id"]
-    election_id = request.json["election_id"]
-    choice = request.json["choice"]
+# @require_jwt_token
+def ballots():
+    output = { 'success': False, 'error': '' }
+    body = request.get_json(force=True)
 
-    output = {} #not sure what to put for error message
-    if voter_id and election_id and choice:
-
-        if request.method == 'POST':
-            found = voter.find_one({'_id': ObjectId(voter_id)})
-
-            # Check if voter is allowed to vote in specified election,
-            # then record their vote
-            elections = found['elections']
-            for e in elections:
-                if e == election_id:
-                    output = record_vote(voter_id, election_id, choice)
-                    break
-    return output
-
-# Helper function for recording votes
-def record_vote(vid, eid, choice):
-    """Helper function for recording new votes"""
-
-    # Checking if user has already voted for that election
-    output = {'success' : False}
-    elec = election.find_one({'_id' : ObjectId(eid)})
-    length = len(elec['choices'])
-
-    filt = {'election_id' : eid, 'voter_id' : vid}
-    if ballot.count_documents(filt, limit=1) == 0:
-
-        # checking if user voted for a valid choice
-        if int(choice) < length - 1 and int(choice) > -1:
-            # Create new ballot if user hasn't voted yet
-            new_ballot = {'choice' : choice, 'election_id' : eid, 'voter_id' : vid }
-            ballot.insert_one(new_ballot)
-
-            # Incrementing tally count
-            election.update_one({'_id': elec['_id']}, {"$inc": {'choices.'+choice+'.count': 1}})
-            output = {'success' : True}
+    if 'voter_id' not in body or 'election_id' not in body or 'choice' not in body:
+        output['error'] = 'Required: voter_id, election_id, choice'
+        return jsonify(output), 400
     
-    return output
+    voter_id = body["voter_id"]
+    election_id = body["election_id"]
+    choice = int(body["choice"])
+
+    found = voter.find_one({'_id': ObjectId(voter_id)})
+    elections = found['elections']
+    
+    if election_id not in elections:
+        output['error'] = f'Voter not eligible to vote in {election_id}'
+        return jsonify(output), 400
+    
+    existing_ballots = ballot.count_documents({'election_id': election_id, 'voter_id': voter_id}, limit=1)
+    if existing_ballots != 0:
+        output['error'] = f'Voter already voted in {election_id}'
+        return jsonify(output), 400
+
+    e = election.find_one({'_id' : ObjectId(election_id)})
+    num_choices = len(e['choices'])
+    if choice < 0 or choice >= num_choices:
+        output['error'] = f'Invalid choice {choice}'
+        return jsonify(output), 400
+    
+    new_ballot = {'choice' : choice, 'election_id' : election_id, 'voter_id' : voter_id }
+    ballot.insert_one(new_ballot)
+    election.update_one({'_id': election_id}, {"$inc": {f'choices.{choice}.count': 1}})
+
+    output = { 'success': True, 'error': '' }
+    return jsonify(output)

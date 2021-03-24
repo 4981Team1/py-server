@@ -56,6 +56,17 @@ def get_voter(voter_id):
     print(output)
     return jsonify(output)
 
+def filter_votable(elections, v_id):
+    votable, non_votable = [], []
+    for e_id in elections:
+        existing_ballots = ballot.count_documents({'election_id': e_id, 'voter_id': v_id}, limit=1)
+        if existing_ballots == 0:
+            votable.append(e_id)
+        else:
+            non_votable.append(e_id)
+            
+    return votable, non_votable
+
 # Get Elections for a Voter - GET /voters/:voterId/elections
 @app.route('/voters/<voter_id>/elections', methods = ['GET'])
 # @require_jwt_token
@@ -67,7 +78,8 @@ def get_elections_for_voters(voter_id):
         output['error'] = f'Voter not found for id {voter_id}'
         return jsonify(output), 400
     
-    output = { 'success': True, 'error': '', 'votable': found['elections'], 'non_votable': [] }
+    votable, non_votable = filter_votable(found['elections'], voter_id)
+    output = { 'success': True, 'error': '', 'votable': votable, 'non_votable': non_votable }
     return jsonify(output), 200
 
 # Add Election for a Voter - POST /voters/:voterId/elections/:electionId
@@ -119,3 +131,4 @@ def delete_election_for_voter(voter_id, election_id):
                 # print("Successfully removed!")
                 output = {'success' : True}
     return output
+
