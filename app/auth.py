@@ -25,7 +25,6 @@ def register():
     hashed = bcrypt.hashpw(raw_password, bcrypt.gensalt())
     voter.insert({'email': body['email'], 'password': hashed})
     
-    
     output = { 'success': True, 'error': '' }
     return jsonify(output), 200
 
@@ -53,7 +52,7 @@ def login():
     encoded_jwt = jwt.encode({ "exp": expires_on }, "secret-phrase-abc", algorithm="HS256")
 
     # jwt.decode(encoded_jwt, "secret", algorithms=["HS256"])
-    output = { 'success': True, 'error': '', 'token': encoded_jwt }
+    output = { 'success': True, 'error': '', 'token': encoded_jwt.decode('utf-8') }
     return jsonify(output), 200
 
 @app.route('/jwt-protected', methods = ['GET'])
