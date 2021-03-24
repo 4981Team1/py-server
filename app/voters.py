@@ -58,7 +58,7 @@ def get_voter(voter_id):
 
 # Get Elections for a Voter - GET /voters/:voterId/elections
 @app.route('/voters/<voter_id>/elections', methods = ['GET'])
-@require_jwt_token
+# @require_jwt_token
 def get_elections_for_voters(voter_id):
     output = { 'success': False, 'error': '', 'elections': '' }
     
@@ -72,7 +72,7 @@ def get_elections_for_voters(voter_id):
 
 # Add Election for a Voter - POST /voters/:voterId/elections/:electionId
 @app.route('/voters/elections', methods = ['POST'])
-@require_jwt_token
+# @require_jwt_token
 def add_election_for_voter():
     output = { 'success': False, 'error': '' }
     body = request.get_json(force=True)

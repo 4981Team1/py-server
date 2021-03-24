@@ -7,7 +7,7 @@ from bson.objectid import ObjectId
 # GETs election info based on given ID
 # http://localhost:5000/elections/<election_id>
 @app.route('/elections/<election_id>', methods = ['GET'])
-@require_jwt_token
+# @require_jwt_token
 def get_election(election_id):
     output = { 'success': False, 'error': '', 'election': '' }
 
@@ -23,10 +23,10 @@ def get_election(election_id):
 # GET all elections' info: 
 # http://localhost:5000/elections
 @app.route('/elections', methods = ['GET'])
-@require_jwt_token
+# @require_jwt_token
 def get_elections():
     elections = election.find()
-    output = [str(e['_id']) for e in elections] 
+    output = [str(e['_id']) for e in elections]
     return jsonify(output), 200
 
 # POST create a new election
@@ -35,7 +35,7 @@ def get_elections():
 # { details="", choices=[]}
 # e.g choices=["a", "b", "c"]
 @app.route('/elections', methods = ['POST'])
-@require_jwt_token
+# @require_jwt_token
 def post_elections():
     output = {'success': False, 'error': '' }
     body = request.get_json(force=True)
