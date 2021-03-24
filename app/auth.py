@@ -26,6 +26,7 @@ def register():
     hashed = bcrypt.hashpw(raw_password, bcrypt.gensalt())
 
     new_voter = {
+        'name': body['email'],
         'email': body['email'],
         'password': hashed,
         'elections': []
