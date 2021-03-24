@@ -26,9 +26,7 @@ def get_election(election_id):
 @require_jwt_token
 def get_elections():
     elections = election.find()
-    output = [{ '_id': str(e['_id']),
-            'details': e['details'],
-            'choices': e['choices']} for e in elections] 
+    output = [str(e['_id']) for e in elections] 
     return jsonify(output), 200
 
 # POST create a new election
