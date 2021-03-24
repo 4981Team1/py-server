@@ -1,46 +1,33 @@
+from app.auth import require_jwt_token
 from flask import make_response, redirect, render_template, request, url_for, jsonify
 from flask import current_app as app
 from . import voter, ballot, election
 from bson.objectid import ObjectId
 
-# GET all elections' info: 
-# http://localhost:5000/elections
-# 
 # GETs election info based on given ID
 # http://localhost:5000/elections/<election_id>
-@app.route('/elections', defaults={'election_id': None}, methods = ['GET'])
 @app.route('/elections/<election_id>', methods = ['GET'])
-def get_elections(election_id):
-    output = {}
+# @require_jwt_token
+def get_election(election_id):
+    output = { 'success': False, 'error': '', 'election': '' }
 
-    # GET /elections
-    if request.method == 'GET':
+    found = election.find_one({"_id": ObjectId(election_id)})
+    if not found:
+        output['error'] = f'Election not found for id {election_id}'
+        return jsonify(output), 400
+    
+    output = { 'success': True, 'error': '', 'election': '' }
+    output['election'] = {'_id': str(found['_id']), 'details': found['details'], 'choices': found['choices'] }
+    return jsonify(output), 200
 
-        # Getting a single election
-        # Check if there's an id parameter for looking up specific election
-        if election_id:
-            filt = {"_id": ObjectId(election_id)}
-
-            # Check if there's an election with the corresponding ID
-            if election.count_documents(filt, limit=1) != 0: 
-                found = election.find_one(filt)
-                output = {
-                    '_id': str(found['_id']),
-                    'details': found['details'],
-                    'choices': found['choices']
-                    }
-        
-        # Getting all elections
-        # No id parameter means getting all elections info instead
-        else:
-            elections = election.find()
-            output = [{
-                '_id': str(election['_id']),
-                'details': election['details'],
-                'choices': election['choices']} for election in elections]
-
-    print(output)
-    return jsonify(output)
+# GET all elections' info: 
+# http://localhost:5000/elections
+@app.route('/elections', methods = ['GET'])
+# @require_jwt_token
+def get_elections():
+    elections = election.find()
+    output = [str(e['_id']) for e in elections]
+    return jsonify(output), 200
 
 # POST create a new election
 # /elections
@@ -48,21 +35,21 @@ def get_elections(election_id):
 # { details="", choices=[]}
 # e.g choices=["a", "b", "c"]
 @app.route('/elections', methods = ['POST'])
+# @require_jwt_token
 def post_elections():
-    output = {
-            '_id': "",
-            'success': False
-        }
+    output = {'success': False, 'error': '' }
+    body = request.get_json(force=True)
 
-    # POST /elections
-    if request.method == 'POST':
-        details = request.json["details"]
-        choices = request.json["choices"]
-
-        # Create new election if details and choices exist
-        if details and choices: 
-            output = insert_election(details, choices)
+    if 'details' not in body or 'choices' not in body:
+        output['error'] = 'Required: details, choices'
+        return jsonify(output), 400
     
+    details = body["details"]
+    choices = body["choices"]
+    
+    election_id = insert_election(details, choices).inserted_id
+            
+    output = {'success': True, 'error': '', '_id': str(election_id)}
     return jsonify(output)
 
 
@@ -100,21 +87,11 @@ def get_voters_for_election(election_id):
 def insert_election(details, choices):
     """Helper function for inserting new elections"""
 
-    output = {}
-
     new_choices = [{
         'option': str(choice),
         'count': 0} for choice in choices]
     insert = { 'choices': new_choices, 'details': details }
     new_elec = election.insert_one(insert)
     
-    # Check if the new election is inserted successfully
-    filt = {"_id": ObjectId(new_elec.inserted_id)}
-    new = election.find_one(filt)
-    output = {
-        '_id': str(new['_id']),
-        'success': True
-    }
-
-    return output
+    return new_elec
 

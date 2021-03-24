@@ -28,4 +28,5 @@ def create_app():
         from . import voters
         from . import elections
         from . import ballots
+        from . import auth
         return app
