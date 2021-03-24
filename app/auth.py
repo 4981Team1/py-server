@@ -5,8 +5,8 @@ from bson.objectid import ObjectId
 
 @app.route('/register', methods = ['POST'])
 def register():
-    pass
+    return "Register route"
 
 @app.route('/login', methods = ['POST'])
 def login():
-    pass
+    return "Login route"
