@@ -17,3 +17,4 @@ werkzeug==1.0.1; python_version >= "2.7" and python_full_version < "3.0.0" or py
 gunicorn==20.0.4; python_version >= "2.7" and python_full_version < "3.0.0" or python_full_version >= "3.5.0"
 flask-cors==3.0.10
 bcrypt==3.2.0
+pyjwt==1.7.1
