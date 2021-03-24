@@ -60,14 +60,14 @@ def get_voter(voter_id):
 @app.route('/voters/<voter_id>/elections', methods = ['GET'])
 # @require_jwt_token
 def get_elections_for_voters(voter_id):
-    output = { 'success': False, 'error': '', 'elections': '' }
+    output = { 'success': False, 'error': '', 'votable': [], 'non_votable': [] }
     
     found = voter.find_one({'_id': ObjectId(voter_id)})
     if not found:
         output['error'] = f'Voter not found for id {voter_id}'
         return jsonify(output), 400
     
-    output = { 'success': True, 'error': '', 'elections': found['elections'] }
+    output = { 'success': True, 'error': '', 'votable': found['elections'], 'non_votable': [] }
     return jsonify(output), 200
 
 # Add Election for a Voter - POST /voters/:voterId/elections/:electionId
