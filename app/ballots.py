@@ -2,6 +2,7 @@ from flask import make_response, redirect, render_template, request, url_for, js
 from flask import current_app as app
 from bson.objectid import ObjectId
 from . import voter, ballot, election
+from app.auth import require_access_machine
 
 # GET all ballots' info: 
 # http://localhost:5000/ballots
@@ -24,7 +25,7 @@ from . import voter, ballot, election
 # 
 # POST http://localhost:5000/ballots
 @app.route('/ballots', methods = ['POST'])
-# @require_jwt_token
+# @require_access_machine
 def ballots():
     output = { 'success': False, 'error': '' }
     body = request.get_json(force=True)

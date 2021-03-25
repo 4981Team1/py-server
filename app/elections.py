@@ -1,4 +1,4 @@
-from app.auth import require_jwt_token
+from app.auth import require_access_voter
 from flask import make_response, redirect, render_template, request, url_for, jsonify
 from flask import current_app as app
 from . import voter, ballot, election
@@ -7,7 +7,7 @@ from bson.objectid import ObjectId
 # GETs election info based on given ID
 # http://localhost:5000/elections/<election_id>
 @app.route('/elections/<election_id>', methods = ['GET'])
-# @require_jwt_token
+# @require_access_voter
 def get_election(election_id):
     output = { 'success': False, 'error': '', 'election': '' }
 
@@ -23,7 +23,7 @@ def get_election(election_id):
 # GET all elections' info: 
 # http://localhost:5000/elections
 @app.route('/elections', methods = ['GET'])
-# @require_jwt_token
+# @require_access_voter
 def get_elections():
     elections = election.find()
     output = [str(e['_id']) for e in elections]
@@ -35,7 +35,7 @@ def get_elections():
 # { details="", choices=[]}
 # e.g choices=["a", "b", "c"]
 @app.route('/elections', methods = ['POST'])
-# @require_jwt_token
+# @require_access_voter
 def post_elections():
     output = {'success': False, 'error': '' }
     body = request.get_json(force=True)
