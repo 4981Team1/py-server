@@ -3,6 +3,7 @@ from flask import make_response, redirect, render_template, request, url_for, js
 from flask import current_app as app
 from . import voter, ballot, election
 from bson.objectid import ObjectId
+import time
 
 @app.route('/voterstest')
 def voterstest():
@@ -58,9 +59,16 @@ def get_voter(voter_id):
 
 def filter_votable(elections, v_id):
     votable, non_votable = [], []
+    current_time = time.time()
+
     for e_id in elections:
         existing_ballots = ballot.count_documents({'election_id': e_id, 'voter_id': v_id}, limit=1)
-        if existing_ballots == 0:
+        
+        # getting each election's end date
+        curr_elec = election.find_one({'_id': ObjectId(e_id)})
+        difference = curr_elec['end'] - current_time
+
+        if existing_ballots == 0 and difference > 0:
             votable.append(e_id)
         else:
             non_votable.append(e_id)
@@ -69,7 +77,7 @@ def filter_votable(elections, v_id):
 
 # Get Elections for a Voter - GET /voters/:voterId/elections
 @app.route('/voters/<voter_id>/elections', methods = ['GET'])
-# @require_access_voter
+@require_access_voter
 def get_elections_for_voters(voter_id):
     output = { 'success': False, 'error': '', 'votable': [], 'non_votable': [] }
     
@@ -84,7 +92,7 @@ def get_elections_for_voters(voter_id):
 
 # Add Election for a Voter - POST /voters/:voterId/elections/:electionId
 @app.route('/voters/elections', methods = ['POST'])
-# @require_access_voter
+@require_access_voter
 def add_election_for_voter():
     output = { 'success': False, 'error': '' }
     body = request.get_json(force=True)
@@ -113,6 +121,7 @@ def add_election_for_voter():
 
 # Remove Election from a Voter - DELETE /voters/:voterId/elections/:electionId
 @app.route('/voters/<voter_id>/elections/<election_id>', methods = ['DELETE'])
+@require_access_voter
 def delete_election_for_voter(voter_id, election_id):
     keyword = "elections"
     url = str(request.url_rule)

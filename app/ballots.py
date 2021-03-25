@@ -25,7 +25,7 @@ from app.auth import require_access_machine
 # 
 # POST http://localhost:5000/ballots
 @app.route('/ballots', methods = ['POST'])
-# @require_access_machine
+@require_access_machine
 def ballots():
     output = { 'success': False, 'error': '' }
     body = request.get_json(force=True)

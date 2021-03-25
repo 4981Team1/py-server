@@ -24,7 +24,7 @@ def get_election(election_id):
 # GET all elections' info: 
 # http://localhost:5000/elections
 @app.route('/elections', methods = ['GET'])
-# @require_access_voter
+@require_access_voter
 def get_elections():
     elections = election.find()
     output = [str(e['_id']) for e in elections]
