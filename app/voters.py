@@ -1,4 +1,4 @@
-from app.auth import require_access_voter
+from app.auth import require_access_voter, require_access_machine
 from flask import make_response, redirect, render_template, request, url_for, jsonify
 from flask import current_app as app
 from . import voter, ballot, election
@@ -13,6 +13,7 @@ def voterstest():
 # Delete Voter - DELETE /voters/:id
 @app.route('/voters', defaults={'voter_id': None}, methods = ['GET'])
 @app.route('/voters/<voter_id>', methods = ['GET', 'DELETE'])
+@require_access_machine
 def get_voter(voter_id):
     output = {
         '_id': "",
@@ -75,12 +76,28 @@ def filter_votable(elections, v_id):
             
     return votable, non_votable
 
-# Get Elections for a Voter - GET /voters/:voterId/elections
+# Get Elections for any Voter - GET /voters/:voterId/elections
 @app.route('/voters/<voter_id>/elections', methods = ['GET'])
-@require_access_voter
-def get_elections_for_voters(voter_id):
+@require_access_machine
+def get_elections_for_any_voter(voter_id):
     output = { 'success': False, 'error': '', 'votable': [], 'non_votable': [] }
     
+    found = voter.find_one({'_id': ObjectId(voter_id)})
+    if not found:
+        output['error'] = f'Voter not found for id {voter_id}'
+        return jsonify(output), 400
+    
+    votable, non_votable = filter_votable(found['elections'], voter_id)
+    output = { 'success': True, 'error': '', 'votable': votable, 'non_votable': non_votable }
+    return jsonify(output), 200
+
+# Get Elections for a Voter (using their own voter_id) - GET /voters/elections
+@app.route('/voters/elections', methods = ['GET'])
+@require_access_voter
+def get_elections_for_voter():
+    output = { 'success': False, 'error': '', 'votable': [], 'non_votable': [] }
+    
+    voter_id = request.headers['_id']
     found = voter.find_one({'_id': ObjectId(voter_id)})
     if not found:
         output['error'] = f'Voter not found for id {voter_id}'
@@ -114,6 +131,14 @@ def add_election_for_voter():
         output['error'] = f'Election not found for id: {election_id}'
         return jsonify(output), 400
 
+    if election_id in voter_to_update['elections']:
+        output['error'] = f'Election already exists for voter: {voter_id}'
+        return jsonify(output), 400
+
+    if election_to_add['creator'] != request.headers['_id']:
+        output['error'] = f'Unable to add voters to an election that you did not create'
+        return jsonify(output), 401
+
     voter.update_one({ "_id": ObjectId(voter_id) }, {'$push': {'elections': election_id}})
 
     output = { 'success': True, 'error': ''}
@@ -121,7 +146,7 @@ def add_election_for_voter():
 
 # Remove Election from a Voter - DELETE /voters/:voterId/elections/:electionId
 @app.route('/voters/<voter_id>/elections/<election_id>', methods = ['DELETE'])
-@require_access_voter
+@require_access_machine
 def delete_election_for_voter(voter_id, election_id):
     keyword = "elections"
     url = str(request.url_rule)

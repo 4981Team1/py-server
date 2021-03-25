@@ -1,14 +1,14 @@
-from app.auth import require_access_voter
+from app.auth import require_access_voter, require_access_machine
 from flask import make_response, redirect, render_template, request, url_for, jsonify
 from flask import current_app as app
-from . import voter, ballot, election
+from . import ACCESS_LEVEL_MACHINE, ACCESS_LEVEL_VOTER, voter, ballot, election
 from bson.objectid import ObjectId
 import time
 
 # GETs election info based on given ID
 # http://localhost:5000/elections/<election_id>
 @app.route('/elections/<election_id>', methods = ['GET'])
-# @require_access_voter
+@require_access_voter
 def get_election(election_id):
     output = { 'success': False, 'error': '', 'election': '' }
 
@@ -16,6 +16,13 @@ def get_election(election_id):
     if not found:
         output['error'] = f'Election not found for id {election_id}'
         return jsonify(output), 400
+
+    v = voter.find_one({'_id': ObjectId(request.headers['_id'])})
+    eligible = election_id in v['elections']
+    creator = found['creator'] == request.headers['_id']
+    if (not eligible) and (not creator) and (v['access_level'] != ACCESS_LEVEL_MACHINE):
+        output['error'] = f'Unathorized to query election'
+        return jsonify(output), 401
     
     output = { 'success': True, 'error': '', 'election': '' }
     output['election'] = {'_id': str(found['_id']), 'details': found['details'], 'choices': found['choices'], 'start': found['start'], 'end': found['end'], 'creator': found['creator'] }
@@ -24,7 +31,7 @@ def get_election(election_id):
 # GET all elections' info: 
 # http://localhost:5000/elections
 @app.route('/elections', methods = ['GET'])
-@require_access_voter
+@require_access_machine
 def get_elections():
     elections = election.find()
     output = [str(e['_id']) for e in elections]
@@ -71,6 +78,7 @@ def post_elections():
 # Get Voters for eligible for given Election
 # GET /elections/:electionID/voters
 @app.route('/elections/<election_id>/voters', methods = ['GET'])
+@require_access_machine
 def get_voters_for_election(election_id):
     keyword = "voters"
     url = str(request.url_rule)
