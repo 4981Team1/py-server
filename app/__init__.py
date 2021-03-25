@@ -8,6 +8,7 @@ app = Flask(__name__, instance_relative_config=False)
 uri = "mongodb+srv://admin:goodteam@cluster0.x0m4l.mongodb.net/flaskdb?retryWrites=true&w=majority"
 # uri = "mongodb://localhost:27017/flaskdb" # uri for local db
 # uri = "mongodb://localhost:27017/py_server" # uri for brian local db
+# uri = "mongodb://localhost:27017/good-team" # uri for andrey local db
 mongo = PyMongo(app, uri)
 # mongo = PyMongo(app, uri) # for connecting to hosted db
 db = mongo.db
@@ -16,6 +17,10 @@ db = mongo.db
 voter = db.voter
 ballot = db.ballot
 election = db.election
+
+# access level constants
+ACCESS_LEVEL_MACHINE = 1
+ACCESS_LEVEL_VOTER = 2
 
 def create_app():
     """Construct the core application."""
