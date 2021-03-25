@@ -18,7 +18,7 @@ def get_election(election_id):
         return jsonify(output), 400
     
     output = { 'success': True, 'error': '', 'election': '' }
-    output['election'] = {'_id': str(found['_id']), 'details': found['details'], 'choices': found['choices'], 'start': found['start'], 'end': found['end'] }
+    output['election'] = {'_id': str(found['_id']), 'details': found['details'], 'choices': found['choices'], 'start': found['start'], 'end': found['end'], 'creator': found['creator'] }
     return jsonify(output), 200
 
 # GET all elections' info: 
@@ -36,7 +36,7 @@ def get_elections():
 # { "details":"", "choices":[], "start": 1616649785.220375, "end": 1616649785.220375}
 # e.g choices=["a", "b", "c"]
 @app.route('/elections', methods = ['POST'])
-# @require_access_voter
+@require_access_voter
 def post_elections():
     output = {'success': False, 'error': '' }
     body = request.get_json(force=True)
@@ -98,27 +98,22 @@ def get_voters_for_election(election_id):
 
     return jsonify(output)
 
-
-@app.route('/time', methods = ['GET'])
-def get_time():
-    output = time.time()
-
-    return jsonify(output)
-
-
 # Get elections you created (ONLY for your own voter_id)
 # GET /elections/created/<voter_id>  (response have 2 lists: live and expired elections)
-@app.route('/elections/created/<voter_id>', methods = ['GET'])
-# @require_access_voter
-def get_created_elections(voter_id):
+@app.route('/elections/created', methods = ['GET'])
+@require_access_voter
+def get_created_elections():
     output = { 'success': False, 'error': '', 'live': [], 'expired': [] }
+    voter_id = request.headers['_id']
     
     found = voter.find_one({'_id': ObjectId(voter_id)})
     if not found:
         output['error'] = f'Voter not found for id {voter_id}'
         return jsonify(output), 400
     
-    live, expired = filter_expired(found['elections'], voter_id)
+    elections = election.find({'creator': voter_id})
+    created_elections = [str(e['_id']) for e in elections]
+    live, expired = filter_expired(created_elections)
     output = { 'success': True, 'error': '', 'live': live, 'expired': expired }
     return jsonify(output), 200
 
@@ -134,7 +129,8 @@ def insert_election(details, choices, start, end, v_id):
     
     return new_elec
 
-def filter_expired(elections, v_id):
+
+def filter_expired(elections):
     """Helper function for filtering live and expired elections"""
     live, expired = [], []
     current_time = time.time()
