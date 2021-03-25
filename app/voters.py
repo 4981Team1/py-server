@@ -1,4 +1,4 @@
-from app.auth import require_jwt_token
+from app.auth import require_access_voter
 from flask import make_response, redirect, render_template, request, url_for, jsonify
 from flask import current_app as app
 from . import voter, ballot, election
@@ -69,7 +69,7 @@ def filter_votable(elections, v_id):
 
 # Get Elections for a Voter - GET /voters/:voterId/elections
 @app.route('/voters/<voter_id>/elections', methods = ['GET'])
-# @require_jwt_token
+# @require_access_voter
 def get_elections_for_voters(voter_id):
     output = { 'success': False, 'error': '', 'votable': [], 'non_votable': [] }
     
@@ -84,7 +84,7 @@ def get_elections_for_voters(voter_id):
 
 # Add Election for a Voter - POST /voters/:voterId/elections/:electionId
 @app.route('/voters/elections', methods = ['POST'])
-# @require_jwt_token
+# @require_access_voter
 def add_election_for_voter():
     output = { 'success': False, 'error': '' }
     body = request.get_json(force=True)
