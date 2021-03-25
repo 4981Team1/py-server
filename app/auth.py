@@ -17,6 +17,11 @@ def register():
     if 'email' not in body or 'password' not in body:
         output['error'] = 'Required: email, password'
         return jsonify(output), 400
+    
+    if 'name' not in body:
+        name = body['email']
+    else:
+        name = body['name']
 
     v = voter.find_one({'email': body['email']})
     if v is not None:
@@ -27,7 +32,7 @@ def register():
     hashed = bcrypt.hashpw(raw_password, bcrypt.gensalt())
 
     new_voter = {
-        'name': body['email'],
+        'name': name,
         'email': body['email'],
         'password': hashed,
         'elections': [],
