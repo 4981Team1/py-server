@@ -40,6 +40,7 @@ def get_elections():
 def post_elections():
     output = {'success': False, 'error': '' }
     body = request.get_json(force=True)
+    voter_id = request.headers['_id']
 
     if 'details' not in body or 'choices' not in body:
         output['error'] = 'Required: details, choices'
@@ -61,7 +62,7 @@ def post_elections():
         return jsonify(output), 400
 
     
-    election_id = insert_election(details, choices, start, end).inserted_id
+    election_id = insert_election(details, choices, start, end, voter_id).inserted_id
             
     output = {'success': True, 'error': '', '_id': str(election_id)}
     return jsonify(output)
@@ -104,46 +105,47 @@ def get_time():
 
     return jsonify(output)
 
+
 # Get elections you created (ONLY for your own voter_id)
 # GET /elections/created/<voter_id>  (response have 2 lists: live and expired elections)
-
-# Add Election for a Voter - POST /voters/:voterId/elections/:electionId
-# @app.route('/elections/created/<voter_id>', methods = ['GET'])
-# # @require_access_voter
-# def get_owned_elections():
-#     output = { 'success': False, 'error': '' }
-#     body = request.get_json(force=True)
-
-#     if 'voter_id' not in body or 'election_id' not in body:
-#         output['error'] = 'Required: voter_id, election_id'
-#         return jsonify(output), 400
-
-#     voter_id = body["voter_id"]
-#     election_id = body["election_id"]    
-
-#     voter_to_update = voter.find_one({"_id": ObjectId(voter_id)})
-#     if not voter_to_update:
-#         output['error'] = f'Voter not found for id: {voter_id}'
-#         return jsonify(output), 400
+@app.route('/elections/created/<voter_id>', methods = ['GET'])
+# @require_access_voter
+def get_created_elections(voter_id):
+    output = { 'success': False, 'error': '', 'live': [], 'expired': [] }
     
-#     election_to_add = election.find_one({"_id": ObjectId(election_id)})
-#     if not election_to_add:
-#         output['error'] = f'Election not found for id: {election_id}'
-#         return jsonify(output), 400
+    found = voter.find_one({'_id': ObjectId(voter_id)})
+    if not found:
+        output['error'] = f'Voter not found for id {voter_id}'
+        return jsonify(output), 400
+    
+    live, expired = filter_expired(found['elections'], voter_id)
+    output = { 'success': True, 'error': '', 'live': live, 'expired': expired }
+    return jsonify(output), 200
 
-#     voter.update_one({ "_id": ObjectId(voter_id) }, {'$push': {'elections': election_id}})
 
-#     output = { 'success': True, 'error': ''}
-#     return jsonify(output), 200
-
-def insert_election(details, choices, start, end):
+def insert_election(details, choices, start, end, v_id):
     """Helper function for inserting new elections"""
 
     new_choices = [{
         'option': str(choice),
         'count': 0} for choice in choices]
-    insert = { 'choices': new_choices, 'details': details, 'start': start, 'end': end }
+    insert = { 'choices': new_choices, 'details': details, 'start': start, 'end': end, 'creator': v_id}
     new_elec = election.insert_one(insert)
     
     return new_elec
+
+def filter_expired(elections, v_id):
+    """Helper function for filtering live and expired elections"""
+    live, expired = [], []
+    current_time = time.time()
+
+    for e_id in elections:
+        curr_elec = election.find_one({'_id': ObjectId(e_id)})
+
+        if curr_elec['end'] - current_time <= 0:
+            expired.append(e_id)
+        else:
+            live.append(e_id)
+            
+    return live, expired
 
