@@ -107,23 +107,23 @@ def get_elections_for_voter():
     output = { 'success': True, 'error': '', 'votable': votable, 'non_votable': non_votable }
     return jsonify(output), 200
 
-# Add Election for a Voter - POST /voters/:voterId/elections/:electionId
+# Add Election for a Voter - POST /voters/elections/
 @app.route('/voters/elections', methods = ['POST'])
 @require_access_voter
 def add_election_for_voter():
     output = { 'success': False, 'error': '' }
     body = request.get_json(force=True)
 
-    if 'voter_id' not in body or 'election_id' not in body:
-        output['error'] = 'Required: voter_id, election_id'
+    if 'email' not in body or 'election_id' not in body:
+        output['error'] = 'Required: email, election_id'
         return jsonify(output), 400
 
-    voter_id = body["voter_id"]
+    email = body["email"]
     election_id = body["election_id"]    
 
-    voter_to_update = voter.find_one({"_id": ObjectId(voter_id)})
+    voter_to_update = voter.find_one({"email": email})
     if not voter_to_update:
-        output['error'] = f'Voter not found for id: {voter_id}'
+        output['error'] = f'Voter not found for email: {email}'
         return jsonify(output), 400
     
     election_to_add = election.find_one({"_id": ObjectId(election_id)})
@@ -132,14 +132,14 @@ def add_election_for_voter():
         return jsonify(output), 400
 
     if election_id in voter_to_update['elections']:
-        output['error'] = f'Election already exists for voter: {voter_id}'
+        output['error'] = f'Election already exists for voter: {email}'
         return jsonify(output), 400
 
     if election_to_add['creator'] != request.headers['_id']:
         output['error'] = f'Unable to add voters to an election that you did not create'
         return jsonify(output), 401
 
-    voter.update_one({ "_id": ObjectId(voter_id) }, {'$push': {'elections': election_id}})
+    voter.update_one({ "email": email }, {'$push': {'elections': election_id}})
 
     output = { 'success': True, 'error': ''}
     return jsonify(output), 200
