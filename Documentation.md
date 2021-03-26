@@ -103,7 +103,7 @@ Adds an election to the list of eligible elections for a voter
 * **Sample Request:**  <br />
 ```json
 { 
-    "voter_id" : "605d135f7d13e0855a7935e5",
+    "email" : "example@email.com",
     "election_id" : "605d135f7r43e0855a7935e2"
 }
   ```
