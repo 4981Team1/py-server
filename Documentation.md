@@ -149,7 +149,7 @@ Returns elections you are elegible for using voter_id from the URL
 **Elections**
 ----
 
-### Get election details
+### Election details
 
 Returns an object with election details
 
