@@ -37,5 +37,5 @@ While the venv is active, you can run the web app by typing in: `flask run`
 
 ### API
 
-Refer to [API.md](./API.md) or to our SwaggerHub [API doc](https://app.swaggerhub.com/apis-docs/agoryelov/vote-api/1.0.0)
+Refer to [Documentation.md](./Documentation.md)
 
