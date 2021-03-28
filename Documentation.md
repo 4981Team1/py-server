@@ -80,7 +80,8 @@ Creates a new ballot for a voter in an election
 ```json
 { 
     "voter_id" : "605d135f7d13e0855a7935e5",
-    "election_id" : "605d135f7r43e0855a7935e2" 
+    "election_id" : "605d135f7r43e0855a7935e2",
+    "choice" : 1
 }
   ```
 * **Sample Response:**  <br />
