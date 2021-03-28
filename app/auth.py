@@ -64,7 +64,7 @@ def login():
         return jsonify(output), 400
     
     # {"exp": 1371720939}
-    expires_on = dt.datetime.utcnow() + dt.timedelta(hours=1)
+    expires_on = dt.datetime.utcnow() + dt.timedelta(hours=24)
     encoded_jwt = jwt.encode({ "exp": expires_on, "_id":  str(v['_id'])}, "secret-phrase-abc", algorithm="HS256")
 
     # jwt.decode(encoded_jwt, "secret", algorithms=["HS256"])
