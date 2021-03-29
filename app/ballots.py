@@ -58,7 +58,7 @@ def ballots():
     
     new_ballot = {'choice' : choice, 'election_id' : election_id, 'voter_id' : voter_id }
     ballot.insert_one(new_ballot)
-    election.update_one({'_id': election_id}, {"$inc": {f'choices.{choice}.count': 1}})
+    election.update_one({'_id': e['_id']}, {"$inc": {f'choices.{choice}.count': 1}})
 
     output = { 'success': True, 'error': '' }
     return jsonify(output)
